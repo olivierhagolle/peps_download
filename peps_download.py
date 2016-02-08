@@ -58,6 +58,8 @@ else :
             help="min longitude in decimal degrees",default=None)
     parser.add_option("--lonmax", dest="lonmax", action="store", type="float", \
             help="max longitude in decimal degrees",default=None)
+    parser.add_option("-o","--orbit", dest="orbit", action="store", type="int", \
+            help="Orbit Path number",default=None)
     parser.add_option("-f","--end_date", dest="end_date", action="store", type="string", \
             help="end date, fmt('2015-12-23')",default=None)
 
@@ -131,15 +133,36 @@ time.sleep(10)
 with open('search.json') as data_file:    
     data = json.load(data_file)
 
+
+#Sort data
+download_list={}
 for i in range(len(data["features"])):    
     print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"]
     prod=data["features"][i]["properties"]["productIdentifier"]
     feature_id=data["features"][i]["id"]
-    if options.write_dir==None :
-        get_product='curl -o %s.zip -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(prod,email,passwd,options.collection,feature_id)
-    else :
-        get_product='curl -o %s/%s.zip -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(options.write_dir,prod,email,passwd,options.collection,feature_id)
-    print get_product
-    if not(options.no_download):
-        os.system(get_product)
+
+    if options.orbit!=None:
+	if prod.find("_R%03d"%options.orbit)>0:
+	    download_list[prod]=feature_id
+    else:
+	download_list[prod]=feature_id
+
+if len(download_list)==0:
+    print "Not product matches the criteria"
+else:
+    for prod in download_list.keys():
+	
+	if options.write_dir==None :
+	    file_exists= os.path.exists(("%s")%(prod)) or  os.path.exists(("%s.zip")%(prod))
+	    get_product='curl -o %s.zip -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(prod,email,passwd,options.collection,download_list[prod])
+	else :
+	    file_exists= os.path.exists(("%s/%s")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
+	    get_product='curl -o %s/%s.zip -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(options.write_dir,prod,email,passwd,options.collection,download_list[prod])
+	print get_product
+	if (not(options.no_download) and not(file_exists)):
+	    os.system(get_product)
+	elif file_exists:
+	    print "%s already exists"
+	elif options.no_download:
+	    print "no download (-n) option was chosen"
 
