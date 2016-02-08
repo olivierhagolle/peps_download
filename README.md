@@ -1,4 +1,4 @@
-# theia_download
+# peps_download
 
 This is a simple piece of code to automatically download the products provided by the French Sentinel collborative ground segment named PEPS : https://peps.cnes.fr. PEPS is mirroring all the Sentinel data provided by ESA, and is providing a simplified access.
 
