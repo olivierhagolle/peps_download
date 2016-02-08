@@ -28,5 +28,6 @@ This software is still quite basic, but if you have an account at PEPS, you may 
 The file peps.txt must contain your email address and your password on the same line, such as follows :
 `your.email@address.fr top_secret`
 
+To get an account : https://peps.cnes.fr/rocket/#/register
 
 
