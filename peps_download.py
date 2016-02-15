@@ -125,10 +125,7 @@ print search_catalog
 os.system(search_catalog)
 time.sleep(10)
 
-
-#====================
-# Download
-#====================
+# Filter catalog result
 
 with open('search.json') as data_file:    
     data = json.load(data_file)
@@ -147,22 +144,40 @@ for i in range(len(data["features"])):
     else:
 	download_list[prod]=feature_id
 
+#====================
+# Download
+#====================
+
+
 if len(download_list)==0:
     print "Not product matches the criteria"
 else:
     for prod in download_list.keys():
 	
 	if options.write_dir==None :
-	    file_exists= os.path.exists(("%s")%(prod)) or  os.path.exists(("%s.zip")%(prod))
-	    get_product='curl -o %s.zip -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(prod,email,passwd,options.collection,download_list[prod])
-	else :
-	    file_exists= os.path.exists(("%s/%s")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
-	    get_product='curl -o %s/%s.zip -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(options.write_dir,prod,email,passwd,options.collection,download_list[prod])
+	    options.write_dir=os.getcwd()	
+	file_exists= os.path.exists(("%s/%s.SAFE")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
+	tmpfile="%s/tmp.tmp"%options.write_dir
+	print tmpfile
+	get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_list[prod])
 	print get_product
 	if (not(options.no_download) and not(file_exists)):
 	    os.system(get_product)
+	    #check if binary product
+
+	    with open(tmpfile) as f_tmp:
+		try:
+		    tmp_data=json.load(f_tmp)
+		    print "Result is a text file"
+		    print tmp_data
+		    sys.exit(-1)
+		except ValueError:
+		    pass
+	    
+	    os.rename("%s"%tmpfile,"%s/%s.zip"%(options.write_dir,prod))
+	    print "product saved as : %s/%s.zip"%(options.write_dir,prod)
 	elif file_exists:
-	    print "%s already exists"
+	    print "%s already exists"%prod
 	elif options.no_download:
 	    print "no download (-n) option was chosen"
 
