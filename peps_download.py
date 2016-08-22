@@ -123,61 +123,69 @@ if os.path.exists('search.json'):
 search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.collection,query_geom,start_date,end_date)
 print search_catalog
 os.system(search_catalog)
-time.sleep(10)
+time.sleep(5)
 
 # Filter catalog result
 
 with open('search.json') as data_file:    
     data = json.load(data_file)
 
-
+if 'ErrorCode' in data :
+    print data['ErrorMessage']
+    sys.exit(-2)
+    
 #Sort data
 download_list={}
+
 for i in range(len(data["features"])):    
-    print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"]
     prod=data["features"][i]["properties"]["productIdentifier"]
     feature_id=data["features"][i]["id"]
 
     if options.orbit!=None:
 	if prod.find("_R%03d"%options.orbit)>0:
 	    download_list[prod]=feature_id
+            print prod,data["features"][i]["properties"]["startDate"]
+
     else:
+        print prod,data["features"][i]["properties"]["startDate"]
 	download_list[prod]=feature_id
 
 #====================
 # Download
 #====================
 
+if (not(options.no_download)):
+    if len(download_list)==0:
+        print "No product matches the criteria"
+    else:
+        for prod in download_list.keys():
 
-if len(download_list)==0:
-    print "Not product matches the criteria"
-else:
-    for prod in download_list.keys():
-	
-	if options.write_dir==None :
-	    options.write_dir=os.getcwd()	
-	file_exists= os.path.exists(("%s/%s.SAFE")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
-	tmpfile="%s/tmp.tmp"%options.write_dir
-	print tmpfile
-	get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_list[prod])
-	print get_product
-	if (not(options.no_download) and not(file_exists)):
-	    os.system(get_product)
-	    #check if binary product
+            if options.write_dir==None :
+                options.write_dir=os.getcwd()	
+            file_exists= os.path.exists(("%s/%s.SAFE")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
+            tmpfile="%s/tmp.tmp"%options.write_dir
+            print tmpfile
+            get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_list[prod])
+            print get_product
+            if (not(options.no_download) and not(file_exists)):
+                os.system(get_product)
+                #check if binary product
 
-	    with open(tmpfile) as f_tmp:
-		try:
-		    tmp_data=json.load(f_tmp)
-		    print "Result is a text file"
-		    print tmp_data
-		    sys.exit(-1)
-		except ValueError:
-		    pass
-	    
-	    os.rename("%s"%tmpfile,"%s/%s.zip"%(options.write_dir,prod))
-	    print "product saved as : %s/%s.zip"%(options.write_dir,prod)
-	elif file_exists:
-	    print "%s already exists"%prod
-	elif options.no_download:
-	    print "no download (-n) option was chosen"
+                with open(tmpfile) as f_tmp:
+                    try:
+                        tmp_data=json.load(f_tmp)
+                        print "Result is a text file"
+                        print tmp_data
+                        sys.exit(-1)
+                    except ValueError:
+                        pass
 
+                os.rename("%s"%tmpfile,"%s/%s.zip"%(options.write_dir,prod))
+                print "product saved as : %s/%s.zip"%(options.write_dir,prod)
+            elif file_exists:
+                print "%s already exists"%prod
+            elif options.no_download:
+                print "no download (-n) option was chosen"
+
+else :
+    print "no download (-n) option was chosen"
