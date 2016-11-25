@@ -28,8 +28,7 @@ if len(sys.argv) == 1:
     print "example 1 : python %s -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01"%sys.argv[0]
     print "example 2 : python %s --lon 1 --lat 44 -a peps.txt -d 2015-11-01 -f 2015-12-01"%sys.argv[0]
     print "example 3 : python %s --lonmin 1 --lonmax 2 --latmin 43 --latmax 44 -a peps.txt -d 2015-11-01 -f 2015-12-01"%sys.argv[0]
-    print "example 4 : python %s -l 'Toulouse' -a peps.txt -c SpotWorldHeritage -p SPOT4 -d 2005-11-01 -f 2006-12-01"%sys.argv[0]
-    sys.exit(-1)
+   sys.exit(-1)
 else :
     usage = "usage: %prog [options] "
     parser = OptionParser(usage=usage)
@@ -95,13 +94,14 @@ elif geom=='location':
     
 if options.start_date!=None:    
     start_date=options.start_date
-    if options.end_date!=None:
-        end_date=options.end_date
-    else:
-        end_date=date.today().isoformat()
+else :
+    start_date=date(2015,01,01).isoformat()
 
 
-
+if options.end_date!=None:
+    end_date=options.end_date
+else:
+    end_date=date.today().isoformat()
 #====================
 # read authentification file
 #====================
