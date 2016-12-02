@@ -40,7 +40,11 @@ else :
     parser.add_option("-w","--write_dir", dest="write_dir", action="store",type="string",  \
             help="Path where the products should be downloaded",default='.')
     parser.add_option("-c","--collection", dest="collection", action="store", type="choice",  \
-            help="Collection within theia collections",choices=['S1','S2','S3'],default='S2')
+            help="Collection",choices=['S1','S2','S3'],default='S2')
+    parser.add_option("-i","--instrument", dest="instrument", action="store", type="choice",  \
+                      help="Instrument (for Sentinel-3)",choices=['OLCI','SLSTR'],default='OLCI')
+    parser.add_option("-m","--mode", dest="mode", action="store", type="choice",  \
+                      help="Mode (for Sentinel-3 OLCI)",choices=['OL_1_EFR___','OL_1_ERR___','OL_1_RBT___'],default='OL_1_EFR___')
     parser.add_option("-n","--no_download", dest="no_download", action="store_true",  \
             help="Do not download products, just print curl command",default=False)
     parser.add_option("-d", "--start_date", dest="start_date", action="store", type="string", \
@@ -119,8 +123,19 @@ except :
 
 if os.path.exists('search.json'):
     os.remove('search.json')
+
+if options.collection=='S3':
+    if options.instrument=='OLCI':
+        search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&instrument=%s\&productType=%s\&startDate=%s\&completionDate=%s\&maxRecords=500'\
+            %(options.collection,query_geom,options.instrument,options.mode,start_date,end_date)
+    else:
+        search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&instrument=%s\&startDate=%s\&completionDate=%s\&maxRecords=500'\
+            %(options.collection,query_geom,options.instrument,start_date,end_date) 
+else :
+    search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.collection,query_geom,start_date,end_date)
+
+# search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.collection,query_geom,start_date,end_date)
     
-search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.collection,query_geom,start_date,end_date)
 print search_catalog
 os.system(search_catalog)
 time.sleep(5)
