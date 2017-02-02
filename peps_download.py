@@ -25,7 +25,7 @@ if len(sys.argv) == 1:
     print '      '+sys.argv[0]+' [options]'
     print "     Aide : ", prog, " --help"
     print "        ou : ", prog, " -h"
-    print "example 1 : python %s -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01"%sys.argv[0]
+    print "example 1 : python %s -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01 -c S2ST" %sys.argv[0]
     print "example 2 : python %s --lon 1 --lat 44 -a peps.txt -d 2015-11-01 -f 2015-12-01"%sys.argv[0]
     print "example 3 : python %s --lonmin 1 --lonmax 2 --latmin 43 --latmax 44 -a peps.txt -d 2015-11-01 -f 2015-12-01"%sys.argv[0]
     print "example 4 : python %s -l 'Toulouse' -a peps.txt -c SpotWorldHeritage -p SPOT4 -d 2005-11-01 -f 2006-12-01"%sys.argv[0]
@@ -41,7 +41,7 @@ else :
     parser.add_option("-w","--write_dir", dest="write_dir", action="store",type="string",  \
             help="Path where the products should be downloaded",default='.')
     parser.add_option("-c","--collection", dest="collection", action="store", type="choice",  \
-            help="Collection within theia collections",choices=['S1','S2','S3'],default='S2')
+            help="Collection within theia collections",choices=['S1','S2','S2ST','S3'],default='S2')
     parser.add_option("-n","--no_download", dest="no_download", action="store_true",  \
             help="Do not download products, just print curl command",default=False)
     parser.add_option("-d", "--start_date", dest="start_date", action="store", type="string", \
@@ -85,14 +85,16 @@ else :
     else :
           print "please choose location and coordinates, but not both"
           sys.exit(-1)
-          
+
+# geometric parameters of catalog request          
 if geom=='point':
     query_geom='lat=%f\&lon=%f'%(options.lat,options.lon)
 elif geom=='rectangle':
     query_geom='box={lonmin},{latmin},{lonmax},{latmax}'.format(latmin=options.latmin,latmax=options.latmax,lonmin=options.lonmin,lonmax=options.lonmax)
 elif geom=='location':
     query_geom="q=%s"%options.location
-    
+
+# date parameters of catalog request    
 if options.start_date!=None:    
     start_date=options.start_date
     if options.end_date!=None:
@@ -100,7 +102,29 @@ if options.start_date!=None:
     else:
         end_date=date.today().isoformat()
 
+# special case for Sentinel-2
 
+if options.collection=='S2':
+    if  options.start_date>= '2016-12-05':
+        print "**** products after '2016-12-05' are stored in Tiled products collection"
+        print "**** please use option -c S2ST"
+        time.sleep(5)
+    elif options.end_date>= '2016-12-05':
+        print "**** products after '2016-12-05' are stored in Tiled products collection"
+        print "**** please use option -c S2ST to get the products after that date"
+        print "**** products before that date will be downloaded"
+        time.sleep(5)
+
+if options.collection=='S2ST':
+    if  options.end_date< '2016-12-05':
+        print "**** products before '2016-12-05' are stored in non-tiled products collection"
+        print "**** please use option -c S2"
+        time.sleep(5)
+    elif options.start_date< '2016-12-05':
+        print "**** products before '2016-12-05' are stored in non-tiled products collection"
+        print "**** please use option -c S2 to get the products before that date"
+        print "**** products after that date will be downloaded"
+        time.sleep(5)
 
 #====================
 # read authentification file
@@ -119,17 +143,21 @@ except :
 
 if os.path.exists('search.json'):
     os.remove('search.json')
-    
+
+
+
+# search in catalog
+
 search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.collection,query_geom,start_date,end_date)
+        
+    
 print search_catalog
 os.system(search_catalog)
 time.sleep(10)
 
 # Filter catalog result
-
 with open('search.json') as data_file:    
     data = json.load(data_file)
-
 
 #Sort data
 download_list={}
