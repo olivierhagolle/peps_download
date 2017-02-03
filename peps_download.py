@@ -153,52 +153,71 @@ search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collection
     
 print search_catalog
 os.system(search_catalog)
-time.sleep(10)
+time.sleep(5)
 
 # Filter catalog result
 with open('search.json') as data_file:    
     data = json.load(data_file)
 
 #Sort data
-download_list={}
+download_dict={}
+storage_dict={}
 for i in range(len(data["features"])):    
-    print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"]
     prod=data["features"][i]["properties"]["productIdentifier"]
     feature_id=data["features"][i]["id"]
+    storage=data["features"][i]["properties"]["storage"]["mode"]
+
+    print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"],storage
 
     if options.orbit!=None:
 	if prod.find("_R%03d"%options.orbit)>0:
-	    download_list[prod]=feature_id
+	    download_dict[prod]=feature_id
+            storage_dict[prod]=storage
     else:
-	download_list[prod]=feature_id
+        if storage=="tape":
+            download_dict[prod]=feature_id
+            storage_dict[prod]=storage
+
 
 #====================
 # Download
 #====================
 
 
-if len(download_list)==0:
+if len(download_dict)==0:
     print "Not product matches the criteria"
 else:
-    for prod in download_list.keys():
-	
+    for prod in download_dict.keys():	
 	if options.write_dir==None :
 	    options.write_dir=os.getcwd()	
 	file_exists= os.path.exists(("%s/%s.SAFE")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
 	tmpfile="%s/tmp.tmp"%options.write_dir
 	print tmpfile
-	get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_list[prod])
+	get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_dict[prod])
 	print get_product
 	if (not(options.no_download) and not(file_exists)):
-	    os.system(get_product)
-	    #check if binary product
-
+            if storage_dict[prod]=="tape":
+                print "***product is on tape, we'll have to wait a little"
+                for attempt in range(5):
+                    print "\t attempt", attempt+1
+                    os.system(get_product)
+                    if not os.path.exists('tmp.tmp'):
+                        time.sleep(45)
+                        if attempt==4 :
+                            print "*********download timed out**********"
+                            sys.exit(-2)
+                    else:
+                        break
+                        
+            else :
+                os.system(get_product)
+            #check if binary product
 	    with open(tmpfile) as f_tmp:
 		try:
 		    tmp_data=json.load(f_tmp)
-		    print "Result is a text file"
-		    print tmp_data
-		    sys.exit(-1)
+                    print "Result is a text file"
+                    print tmp_data
+                    sys.exit(-1)
 		except ValueError:
 		    pass
 	    
