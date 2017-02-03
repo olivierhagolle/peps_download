@@ -174,9 +174,8 @@ for i in range(len(data["features"])):
 	    download_dict[prod]=feature_id
             storage_dict[prod]=storage
     else:
-        if storage=="tape":
-            download_dict[prod]=feature_id
-            storage_dict[prod]=storage
+        download_dict[prod]=feature_id
+        storage_dict[prod]=storage
 
 
 #====================
@@ -185,19 +184,20 @@ for i in range(len(data["features"])):
 
 
 if len(download_dict)==0:
-    print "Not product matches the criteria"
+    print "No product matches the criteria"
 else:
     for prod in download_dict.keys():	
 	if options.write_dir==None :
 	    options.write_dir=os.getcwd()	
 	file_exists= os.path.exists(("%s/%s.SAFE")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
 	tmpfile="%s/tmp.tmp"%options.write_dir
-	print tmpfile
+	print "\nDownload of product : %s"%prod
 	get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_dict[prod])
 	print get_product
 	if (not(options.no_download) and not(file_exists)):
             if storage_dict[prod]=="tape":
-                print "***product is on tape, we'll have to wait a little"
+                #downloading product from tape requires several attemps, waiting for the tape to be read
+                print "\n***product is on tape, we'll have to wait a little"
                 for attempt in range(5):
                     print "\t attempt", attempt+1
                     os.system(get_product)
