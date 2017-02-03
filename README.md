@@ -6,12 +6,19 @@ This code was written thanks to the precious help of one my colleagues at CNES [
 
 This code relies on python 2.7 and on the curl utility. Because of that, I guess it only works with linux.
 
+Only the recent PEPS products or the frequently accessed ones are stored on disks (2 PB), while the rest is stored on tapes (up to 14 PB). Data stored on tapes have an access time increased by 1 mn.
+ 
+
 ## Examples
 This software is still quite basic, but if you have an account at PEPS, you may download products using command lines like 
 
 - `python ./peps_download.py  -c S2 -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01`
 
- which downloads the Sentinel-2 products above Toulouse, acquired in November 2015.
+ which downloads the *Sentinel-2 DataTake products*  acquired in November 2015 above Toulouse.
+
+- `python ./peps_download.py  -c S2ST -l 'Toulouse' -a peps.txt -d 2017-01-01 -f 2017-02-01`
+
+ which downloads the *Sentinel-2 single tile* products  acquired in January 2017 above Toulouse
 
 - `python ./peps_download.py  -c S2 --lon 1 --lat 43.5 -a peps.txt -d 2015-11-01 -f 2015-12-01`
 
