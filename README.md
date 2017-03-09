@@ -14,7 +14,7 @@ This software is still quite basic, but if you have an account at PEPS, you may 
 
 - `python ./peps_download.py  -c S2 -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01`
 
- which downloads the *Sentinel-2 DataTake products*  acquired in November 2015 above Toulouse.
+ which downloads the *Sentinel-2 DataTake products*  acquired in November 2015 above Toulouse. When you provide a date YY-MM-DD, it is actually YY-MM-DD:00;00:00. So a request with `-d 2015-11-01 -f 2015-11-01` will yield no result, while `-d 2015-11-01 -f 2015-11-02` will yield data acquired on 2015-11-01 (provided they exist).
 
 - `python ./peps_download.py  -c S2ST -l 'Toulouse' -a peps.txt -d 2017-01-01 -f 2017-02-01`
 
