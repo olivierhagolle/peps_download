@@ -175,16 +175,30 @@ if 'ErrorCode' in data :
 download_dict={}
 storage_dict={}
 for i in range(len(data["features"])):    
-    prod=data["features"][i]["properties"]["productIdentifier"]
+    prod      =data["features"][i]["properties"]["productIdentifier"]
     feature_id=data["features"][i]["id"]
-    storage=data["features"][i]["properties"]["storage"]["mode"]
+    storage   =data["features"][i]["properties"]["storage"]["mode"]
+    platform  =data["features"][i]["properties"]["platform"]
+    #recup du numero d'orbite
+    orbitN=data["features"][i]["properties"]["orbitNumber"]
+    if platform=='S1A':
+    #calcul de l'orbite relative pour Sentinel 1A
+        relativeOrbit=((orbitN-73)%175)+1
+    elif platform=='S1B':
+    #calcul de l'orbite relative pour Sentinel 1B
+        relativeOrbit=((orbitN-27)%175)+1
 
     print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"],storage
 
     if options.orbit!=None:
-	if prod.find("_R%03d"%options.orbit)>0:
-	    download_dict[prod]=feature_id
-            storage_dict[prod]=storage
+        if platform.startswith('S2'):
+            if prod.find("_R%03d"%options.orbit)>0:
+                download_dict[prod]=feature_id
+                storage_dict[prod]=storage
+        elif platform.startswith('S1'):
+            if relativeOrbit==options.orbit:
+                download_list[prod]=feature_id
+                storage_list[prod]=storage
     else:
         download_dict[prod]=feature_id
         storage_dict[prod]=storage
