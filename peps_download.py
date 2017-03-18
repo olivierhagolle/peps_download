@@ -29,6 +29,7 @@ if len(sys.argv) == 1:
     print "example 2 : python %s --lon 1 --lat 44 -a peps.txt -d 2015-11-01 -f 2015-12-01 -c S2"%sys.argv[0]
     print "example 3 : python %s --lonmin 1 --lonmax 2 --latmin 43 --latmax 44 -a peps.txt -d 2015-11-01 -f 2015-12-01 -c S2"%sys.argv[0]
     print "example 4 : python %s -l 'Toulouse' -a peps.txt -c SpotWorldHeritage -p SPOT4 -d 2005-11-01 -f 2006-12-01"%sys.argv[0]
+    print "example 5 : python %s -c S1 -p GRD -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01"%sys.argv[0]
     sys.exit(-1)
 else :
     usage = "usage: %prog [options] "
@@ -42,6 +43,10 @@ else :
             help="Path where the products should be downloaded",default='.')
     parser.add_option("-c","--collection", dest="collection", action="store", type="choice",  \
             help="Collection within theia collections",choices=['S1','S2','S2ST','S3'],default='S2')
+    parser.add_option("-p","--product_type", dest="product_type", action="store", type="string", \
+            help="GRD, SLC, OCN (for S1) | S2MSI1C (for S2)",default="")
+    parser.add_option("-m","--sensor_mode", dest="sensor_mode", action="store", type="string", \
+            help="EW, IW , SM, WV (for S1) | INS-NOBS, INS-RAW (for S2)",default="")
     parser.add_option("-n","--no_download", dest="no_download", action="store_true",  \
             help="Do not download products, just print curl command",default=False)
     parser.add_option("-d", "--start_date", dest="start_date", action="store", type="string", \
@@ -143,13 +148,16 @@ except :
 
 if os.path.exists('search.json'):
     os.remove('search.json')
+    
 
-
-
+ 
 # search in catalog
+if (options.product_type=="") and (options.sensor_mode=="") :
+	search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.collection,query_geom,start_date,end_date)
+else :
+	search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s'%(options.collection,query_geom,start_date,end_date,options.product_type,options.sensor_mode)
 
-search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.collection,query_geom,start_date,end_date)
-        
+      
     
 print search_catalog
 os.system(search_catalog)
@@ -159,6 +167,10 @@ time.sleep(5)
 with open('search.json') as data_file:    
     data = json.load(data_file)
 
+if 'ErrorCode' in data :
+    print data['ErrorMessage']
+    sys.exit(-2)
+    
 #Sort data
 download_dict={}
 storage_dict={}
@@ -215,7 +227,7 @@ else:
 	    with open(tmpfile) as f_tmp:
 		try:
 		    tmp_data=json.load(f_tmp)
-                    print "Result is a text file"
+                    print "Result is a text file (might come from a wrong password file)"
                     print tmp_data
                     sys.exit(-1)
 		except ValueError:
