@@ -10,6 +10,8 @@ Only the recent PEPS products or the frequently accessed ones are stored on disk
  
 
 ## Examples
+
+### for Sentinel-2
 This software is still quite basic, but if you have an account at PEPS, you may download products using command lines like 
 
 - `python ./peps_download.py  -c S2 -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01`
@@ -27,12 +29,13 @@ This software is still quite basic, but if you have an account at PEPS, you may 
  - `python ./peps_download.py  -c S2 --lon 1 --lat 43.5 -a peps.txt -d 2015-11-01 -f 2015-12-01 -o 51` 
 
  which downloads the Sentinel-2 products above --lon 1 --lat 43.5 (~Toulouse), acquired in November 2015 from orbit path number 51 only.
-
+### for Sentinel-1
 - `python ./peps_download.py  -c S1 --lonmin 1 --lonmax 2 --latmin 43 --latmax 44 -a peps.txt -d 2015-11-01 -f 2015-12-01`
 
  which downloads the Sentinel-1 products in latitude, longitude box around Toulouse, acquired in November 2015.
 
-
+- `python ./peps_download.py -c S1 -p GRD -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01`
+which downloads S1 GRD products above Toulouse
 
 ##Authentification 
 
