@@ -67,8 +67,13 @@ else :
             help="Orbit Path number",default=None)
     parser.add_option("-f","--end_date", dest="end_date", action="store", type="string", \
             help="end date, fmt('2015-12-23')",default=None)
+    parser.add_option("--json", dest="search_json_file", action="store", type="string", \
+            help="Output search JSON filename", default=None)
 
     (options, args) = parser.parse_args()
+
+if options.search_json_file==None or options.search_json_file=="":
+    options.search_json_file='search.json'
 
 if options.location==None:    
     if options.lat==None or options.lon==None:
@@ -146,16 +151,16 @@ except :
 
 
 
-if os.path.exists('search.json'):
-    os.remove('search.json')
+if os.path.exists(options.search_json_file):
+    os.remove(options.search_json_file)
     
 
  
 # search in catalog
 if (options.product_type=="") and (options.sensor_mode=="") :
-	search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.collection,query_geom,start_date,end_date)
+	search_catalog='curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.search_json_file,options.collection,query_geom,start_date,end_date)
 else :
-	search_catalog='curl -k -o search.json https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s'%(options.collection,query_geom,start_date,end_date,options.product_type,options.sensor_mode)
+	search_catalog='curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s'%(options.search_json_file,options.collection,query_geom,start_date,end_date,options.product_type,options.sensor_mode)
 
       
     
@@ -164,7 +169,7 @@ os.system(search_catalog)
 time.sleep(5)
 
 # Filter catalog result
-with open('search.json') as data_file:    
+with open(options.search_json_file) as data_file:    
     data = json.load(data_file)
 
 if 'ErrorCode' in data :
@@ -216,7 +221,8 @@ else:
 	if options.write_dir==None :
 	    options.write_dir=os.getcwd()	
 	file_exists= os.path.exists(("%s/%s.SAFE")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
-	tmpfile="%s/tmp.tmp"%options.write_dir
+	tmticks=time.time()
+	tmpfile=("%s/tmp_%s.tmp")%(options.write_dir,tmticks)
 	print "\nDownload of product : %s"%prod
 	get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_dict[prod])
 	print get_product
@@ -227,7 +233,7 @@ else:
                 for attempt in range(5):
                     print "\t attempt", attempt+1
                     os.system(get_product)
-                    if not os.path.exists('tmp.tmp'):
+                    if not os.path.exists(('tmp_%s.tmp')%(tmticks)):
                         time.sleep(45)
                         if attempt==4 :
                             print "*********download timed out**********"
