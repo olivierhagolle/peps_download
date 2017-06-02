@@ -39,6 +39,8 @@ else :
             help="town name (pick one which is not too frequent to avoid confusions)",default=None)		
     parser.add_option("-a","--auth", dest="auth", action="store", type="string", \
             help="Peps account and password file")
+    parser.add_option("--proxy", dest="http_proxy", action="store", type="string", \
+            help="HTTPproxy like http://user:password@host:port")
     parser.add_option("-w","--write_dir", dest="write_dir", action="store",type="string",  \
             help="Path where the products should be downloaded",default='.')
     parser.add_option("-c","--collection", dest="collection", action="store", type="choice",  \
@@ -74,6 +76,11 @@ else :
 
 if options.search_json_file==None or options.search_json_file=="":
     options.search_json_file='search.json'
+
+if options.http_proxy==None :
+    options.http_proxy = ''
+else :
+    options.http_proxy = '-x '+options.http_proxy
 
 if options.location==None:    
     if options.lat==None or options.lon==None:
@@ -158,9 +165,9 @@ if os.path.exists(options.search_json_file):
  
 # search in catalog
 if (options.product_type=="") and (options.sensor_mode=="") :
-	search_catalog='curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.search_json_file,options.collection,query_geom,start_date,end_date)
+	search_catalog='curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500 %s'%(options.search_json_file,options.collection,query_geom,start_date,end_date,options.http_proxy)
 else :
-	search_catalog='curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s'%(options.search_json_file,options.collection,query_geom,start_date,end_date,options.product_type,options.sensor_mode)
+	search_catalog='curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s %s'%(options.search_json_file,options.collection,query_geom,start_date,end_date,options.product_type,options.sensor_mode,options.http_proxy)
 
       
     
@@ -224,7 +231,7 @@ else:
 	tmticks=time.time()
 	tmpfile=("%s/tmp_%s.tmp")%(options.write_dir,tmticks)
 	print "\nDownload of product : %s"%prod
-	get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_dict[prod])
+	get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps %s'%(tmpfile,email,passwd,options.collection,download_dict[prod],options.http_proxy)
 	print get_product
 	if (not(options.no_download) and not(file_exists)):
             if storage_dict[prod]=="tape":
