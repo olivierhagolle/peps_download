@@ -233,8 +233,8 @@ else:
                 for attempt in range(5):
                     print "\t attempt", attempt+1
                     os.system(get_product)
-                    if not os.path.exists(('tmp_%s.tmp')%(tmticks)):
-                        time.sleep(45)
+                    if not os.path.exists(("%s/tmp_%s.tmp")%(options.write_dir,tmticks)):
+                        time.sleep(100)
                         if attempt==4 :
                             print "*********download timed out**********"
                             sys.exit(-2)
