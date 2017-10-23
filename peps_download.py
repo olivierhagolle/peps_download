@@ -202,8 +202,8 @@ for i in range(len(data["features"])):
                 storage_dict[prod]=storage
         elif platform.startswith('S1'):
             if relativeOrbit==options.orbit:
-                download_list[prod]=feature_id
-                storage_list[prod]=storage
+                download_dict[prod]=feature_id
+                storage_dict[prod]=storage
     else:
         download_dict[prod]=feature_id
         storage_dict[prod]=storage
