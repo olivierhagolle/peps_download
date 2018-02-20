@@ -44,7 +44,7 @@ else :
     parser.add_option("-c","--collection", dest="collection", action="store", type="choice",  \
             help="Collection within theia collections",choices=['S1','S2','S2ST','S3'],default='S2')
     parser.add_option("-p","--product_type", dest="product_type", action="store", type="string", \
-            help="GRD, SLC, OCN (for S1) | S2MSI1C (for S2)",default="")
+            help="GRD, SLC, OCN (for S1) | S2MSI1C S2MSI2Ap (for S2)",default="")
     parser.add_option("-m","--sensor_mode", dest="sensor_mode", action="store", type="string", \
             help="EW, IW , SM, WV (for S1) | INS-NOBS, INS-RAW (for S2)",default="")
     parser.add_option("-n","--no_download", dest="no_download", action="store_true",  \
@@ -179,35 +179,41 @@ if 'ErrorCode' in data :
 #Sort data
 download_dict={}
 storage_dict={}
-for i in range(len(data["features"])):    
+for i in range(len(data["features"])):
     prod      =data["features"][i]["properties"]["productIdentifier"]
+    print prod
+    print data["features"][i]["properties"]["storage"]
     feature_id=data["features"][i]["id"]
-    storage   =data["features"][i]["properties"]["storage"]["mode"]
-    platform  =data["features"][i]["properties"]["platform"]
-    #recup du numero d'orbite
-    orbitN=data["features"][i]["properties"]["orbitNumber"]
-    if platform=='S1A':
-    #calcul de l'orbite relative pour Sentinel 1A
-        relativeOrbit=((orbitN-73)%175)+1
-    elif platform=='S1B':
-    #calcul de l'orbite relative pour Sentinel 1B
-        relativeOrbit=((orbitN-27)%175)+1
+    try :
+        storage   =data["features"][i]["properties"]["storage"]["mode"]
+        platform  =data["features"][i]["properties"]["platform"]
+        print platform
+        #recup du numero d'orbite
+        orbitN=data["features"][i]["properties"]["orbitNumber"]
+        if platform=='S1A':
+        #calcul de l'orbite relative pour Sentinel 1A
+            relativeOrbit=((orbitN-73)%175)+1
+        elif platform=='S1B':
+        #calcul de l'orbite relative pour Sentinel 1B
+            relativeOrbit=((orbitN-27)%175)+1
 
-    print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"],storage
+        #print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"],storage
 
-    if options.orbit!=None:
-        if platform.startswith('S2'):
-            if prod.find("_R%03d"%options.orbit)>0:
-                download_dict[prod]=feature_id
-                storage_dict[prod]=storage
-        elif platform.startswith('S1'):
-            if relativeOrbit==options.orbit:
-                download_dict[prod]=feature_id
-                storage_dict[prod]=storage
-    else:
-        download_dict[prod]=feature_id
-        storage_dict[prod]=storage
+        if options.orbit!=None:
+            if platform.startswith('S2'):
+                if prod.find("_R%03d"%options.orbit)>0:
 
+                    download_dict[prod]=feature_id
+                    storage_dict[prod]=storage
+            elif platform.startswith('S1'):
+                if relativeOrbit==options.orbit:
+                    download_dict[prod]=feature_id
+                    storage_dict[prod]=storage
+        else:
+            download_dict[prod]=feature_id
+            storage_dict[prod]=storage
+    except:
+        pass
 
 #====================
 # Download
@@ -230,14 +236,14 @@ else:
             if storage_dict[prod]=="tape":
                 #downloading product from tape requires several attemps, waiting for the tape to be read
                 print "\n***product is on tape, we'll have to wait a little"
-                for attempt in range(5):
-                    print "\t attempt", attempt+1
+                for attempt in range(options.nb_attempts):
+                    print "\t new attempt in three minutes", attempt+1
                     os.system(get_product)
                     if not os.path.exists(("%s/tmp_%s.tmp")%(options.write_dir,tmticks)):
-                        time.sleep(100)
-                        if attempt==4 :
+                        if attempt==(nb_attempts-1):
                             print "*********download timed out**********"
                             sys.exit(-2)
+                        time.sleep(180)
                     else:
                         break
                         
