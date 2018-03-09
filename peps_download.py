@@ -70,6 +70,9 @@ else :
     parser.add_option("--json", dest="search_json_file", action="store", type="string", \
             help="Output search JSON filename", default=None)
 
+    parser.add_option("--attempts", dest="nb_attempts", action="store", type="int", \
+                      help="Max number of attempts", default=5)
+
     (options, args) = parser.parse_args()
 
 if options.search_json_file==None or options.search_json_file=="":
@@ -240,7 +243,7 @@ else:
                     print "\t new attempt in three minutes", attempt+1
                     os.system(get_product)
                     if not os.path.exists(("%s/tmp_%s.tmp")%(options.write_dir,tmticks)):
-                        if attempt==(nb_attempts-1):
+                        if attempt==(options.nb_attempts-1):
                             print "*********download timed out**********"
                             sys.exit(-2)
                         time.sleep(180)
