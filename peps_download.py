@@ -233,7 +233,7 @@ else:
 	tmticks=time.time()
 	tmpfile=("%s/tmp_%s.tmp")%(options.write_dir,tmticks)
 	print "\nDownload of product : %s"%prod
-	get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_dict[prod])
+	get_product="curl -o %s -k -u '%s:%s' https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps"%(tmpfile,email,passwd,options.collection,download_dict[prod])
 	print get_product
 	if (not(options.no_download) and not(file_exists)):
             if storage_dict[prod]=="tape":
