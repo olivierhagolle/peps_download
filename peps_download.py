@@ -135,9 +135,6 @@ else :
     parser.add_option("--json", dest="search_json_file", action="store", type="string", \
             help="Output search JSON filename", default=None)
 
-    parser.add_option("--attempts", dest="nb_attempts", action="store", type="int", \
-                      help="Max number of attempts", default=8)
-
     (options, args) = parser.parse_args()
 
 if options.search_json_file==None or options.search_json_file=="":
@@ -235,7 +232,7 @@ else :
     
 print search_catalog
 os.system(search_catalog)
-time.sleep(2)
+time.sleep(5)
 
 prod,download_dict,storage_dict=parse_catalog(options.search_json_file)
 
@@ -258,7 +255,7 @@ else:
                 tmticks=time.time()
                 tmpfile=("%s/tmp_%s.tmp")%(options.write_dir,tmticks)
                 print "\nStage tape product f : %s"%prod
-                get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_dict[prod])
+                get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps >/dev/null'%(tmpfile,email,passwd,options.collection,download_dict[prod])
                 print get_product
                 os.system(get_product)
 
@@ -319,6 +316,7 @@ else:
         print "%d remaining products are on tape, lets's wait 2 minutes before trying again"% NbProdsToDownload
         print "##############################################################################"               
 
-        time.sleep(120)
+        if NbProdsToDownload>0:
+            time.sleep(120)
 
 
