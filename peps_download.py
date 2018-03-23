@@ -46,13 +46,11 @@ def parse_catalog(search_json_file):
     storage_dict={}
     for i in range(len(data["features"])):
         prod      =data["features"][i]["properties"]["productIdentifier"]
-        print prod
-        print data["features"][i]["properties"]["storage"]
+        print prod, data["features"][i]["properties"]["storage"]["mode"]
         feature_id=data["features"][i]["id"]
         try :
             storage   =data["features"][i]["properties"]["storage"]["mode"]
             platform  =data["features"][i]["properties"]["platform"]
-            print platform
             #recup du numero d'orbite
             orbitN=data["features"][i]["properties"]["orbitNumber"]
             if platform=='S1A':
@@ -254,13 +252,14 @@ else:
             if storage_dict[prod]=="tape":
                 tmticks=time.time()
                 tmpfile=("%s/tmp_%s.tmp")%(options.write_dir,tmticks)
-                print "\nStage tape product f : %s"%prod
-                get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps >/dev/null'%(tmpfile,email,passwd,options.collection,download_dict[prod])
-                print get_product
+                print "\nStage tape product: %s"%prod
+                get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps &>/dev/null'%(tmpfile,email,passwd,options.collection,download_dict[prod])
                 os.system(get_product)
 
     NbProdsToDownload=len(download_dict.keys())
-
+    print "##########################"               
+    print "%d  products to download"% NbProdsToDownload
+    print "##########################"   
     while (NbProdsToDownload >0):
        # redo catalog search to update disk/tape status
         if (options.product_type=="") and (options.sensor_mode=="") :
@@ -293,8 +292,6 @@ else:
 
             elif file_exists:
                 print "%s already exists"%prod
-            elif options.no_download:
-                print "no download (-n) option was chosen"
 
         # download all products on tape
         for prod in download_dict.keys():	
@@ -312,11 +309,11 @@ else:
                     else:
                         check_rename(tmpfile,options)
                         
-        print "##############################################################################"               
-        print "%d remaining products are on tape, lets's wait 2 minutes before trying again"% NbProdsToDownload
-        print "##############################################################################"               
 
         if NbProdsToDownload>0:
+            print "##############################################################################"               
+            print "%d remaining products are on tape, lets's wait 2 minutes before trying again"% NbProdsToDownload
+            print "##############################################################################"               
             time.sleep(120)
 
 
