@@ -14,8 +14,73 @@ class OptionParser (optparse.OptionParser):
       # Assumes the option's 'default' is set to None!
       if getattr(self.values, option.dest) is None:
           self.error("%s option not supplied" % option)
+    
  
 ###########################################################################
+def check_rename(tmpfile,options):
+
+    with open(tmpfile) as f_tmp:
+        try:
+            tmp_data=json.load(f_tmp)
+            print "Result is a text file (might come from a wrong password file)"
+            print tmp_data
+            sys.exit(-1)
+        except ValueError:
+            pass
+
+    os.rename("%s"%tmpfile,"%s/%s.zip"%(options.write_dir,prod))
+    print "product saved as : %s/%s.zip"%(options.write_dir,prod)
+
+###########################################################################
+def parse_catalog(search_json_file):
+    # Filter catalog result
+    with open(search_json_file) as data_file:    
+        data = json.load(data_file)
+
+    if 'ErrorCode' in data :
+        print data['ErrorMessage']
+        sys.exit(-2)
+
+    #Sort data
+    download_dict={}
+    storage_dict={}
+    for i in range(len(data["features"])):
+        prod      =data["features"][i]["properties"]["productIdentifier"]
+        print prod
+        print data["features"][i]["properties"]["storage"]
+        feature_id=data["features"][i]["id"]
+        try :
+            storage   =data["features"][i]["properties"]["storage"]["mode"]
+            platform  =data["features"][i]["properties"]["platform"]
+            print platform
+            #recup du numero d'orbite
+            orbitN=data["features"][i]["properties"]["orbitNumber"]
+            if platform=='S1A':
+            #calcul de l'orbite relative pour Sentinel 1A
+                relativeOrbit=((orbitN-73)%175)+1
+            elif platform=='S1B':
+            #calcul de l'orbite relative pour Sentinel 1B
+                relativeOrbit=((orbitN-27)%175)+1
+
+            #print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"],storage
+
+            if options.orbit!=None:
+                if platform.startswith('S2'):
+                    if prod.find("_R%03d"%options.orbit)>0:
+
+                        download_dict[prod]=feature_id
+                        storage_dict[prod]=storage
+                elif platform.startswith('S1'):
+                    if relativeOrbit==options.orbit:
+                        download_dict[prod]=feature_id
+                        storage_dict[prod]=storage
+            else:
+                download_dict[prod]=feature_id
+                storage_dict[prod]=storage
+        except:
+            pass
+    return(prod,download_dict,storage_dict)
+########################################################################### MAIN
 
 #==================
 #parse command line
@@ -71,7 +136,7 @@ else :
             help="Output search JSON filename", default=None)
 
     parser.add_option("--attempts", dest="nb_attempts", action="store", type="int", \
-                      help="Max number of attempts", default=5)
+                      help="Max number of attempts", default=8)
 
     (options, args) = parser.parse_args()
 
@@ -158,8 +223,9 @@ if os.path.exists(options.search_json_file):
     os.remove(options.search_json_file)
     
 
- 
+#==================== 
 # search in catalog
+#====================
 if (options.product_type=="") and (options.sensor_mode=="") :
 	search_catalog='curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.search_json_file,options.collection,query_geom,start_date,end_date)
 else :
@@ -169,54 +235,9 @@ else :
     
 print search_catalog
 os.system(search_catalog)
-time.sleep(5)
+time.sleep(2)
 
-# Filter catalog result
-with open(options.search_json_file) as data_file:    
-    data = json.load(data_file)
-
-if 'ErrorCode' in data :
-    print data['ErrorMessage']
-    sys.exit(-2)
-    
-#Sort data
-download_dict={}
-storage_dict={}
-for i in range(len(data["features"])):
-    prod      =data["features"][i]["properties"]["productIdentifier"]
-    print prod
-    print data["features"][i]["properties"]["storage"]
-    feature_id=data["features"][i]["id"]
-    try :
-        storage   =data["features"][i]["properties"]["storage"]["mode"]
-        platform  =data["features"][i]["properties"]["platform"]
-        print platform
-        #recup du numero d'orbite
-        orbitN=data["features"][i]["properties"]["orbitNumber"]
-        if platform=='S1A':
-        #calcul de l'orbite relative pour Sentinel 1A
-            relativeOrbit=((orbitN-73)%175)+1
-        elif platform=='S1B':
-        #calcul de l'orbite relative pour Sentinel 1B
-            relativeOrbit=((orbitN-27)%175)+1
-
-        #print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"],storage
-
-        if options.orbit!=None:
-            if platform.startswith('S2'):
-                if prod.find("_R%03d"%options.orbit)>0:
-
-                    download_dict[prod]=feature_id
-                    storage_dict[prod]=storage
-            elif platform.startswith('S1'):
-                if relativeOrbit==options.orbit:
-                    download_dict[prod]=feature_id
-                    storage_dict[prod]=storage
-        else:
-            download_dict[prod]=feature_id
-            storage_dict[prod]=storage
-    except:
-        pass
+prod,download_dict,storage_dict=parse_catalog(options.search_json_file)
 
 #====================
 # Download
@@ -226,46 +247,78 @@ for i in range(len(data["features"])):
 if len(download_dict)==0:
     print "No product matches the criteria"
 else:
-    for prod in download_dict.keys():	
-	if options.write_dir==None :
-	    options.write_dir=os.getcwd()	
-	file_exists= os.path.exists(("%s/%s.SAFE")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
-	tmticks=time.time()
-	tmpfile=("%s/tmp_%s.tmp")%(options.write_dir,tmticks)
-	print "\nDownload of product : %s"%prod
-	get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_dict[prod])
-	print get_product
-	if (not(options.no_download) and not(file_exists)):
+    # first try for the products on tape
+    if options.write_dir==None :
+        options.write_dir=os.getcwd()	
+
+    for prod in download_dict.keys():
+        file_exists= os.path.exists(("%s/%s.SAFE")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
+        if (not(options.no_download) and not(file_exists)):
             if storage_dict[prod]=="tape":
-                #downloading product from tape requires several attemps, waiting for the tape to be read
-                print "\n***product is on tape, we'll have to wait a little"
-                for attempt in range(options.nb_attempts):
-                    print "\t new attempt in three minutes", attempt+1
+                tmticks=time.time()
+                tmpfile=("%s/tmp_%s.tmp")%(options.write_dir,tmticks)
+                print "\nStage tape product f : %s"%prod
+                get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_dict[prod])
+                print get_product
+                os.system(get_product)
+
+    NbProdsToDownload=len(download_dict.keys())
+
+    while (NbProdsToDownload >0):
+       # redo catalog search to update disk/tape status
+        if (options.product_type=="") and (options.sensor_mode=="") :
+            search_catalog='curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500'%(options.search_json_file,options.collection,query_geom,start_date,end_date)
+        else :
+            search_catalog='curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s'%(options.search_json_file,options.collection,query_geom,start_date,end_date,options.product_type,options.sensor_mode)
+
+        os.system(search_catalog)
+        time.sleep(2)
+
+        prod,download_dict,storage_dict=parse_catalog(options.search_json_file)
+
+        NbProdsToDownload=0
+        #download all products on disk
+        for prod in download_dict.keys():	
+            file_exists= os.path.exists(("%s/%s.SAFE")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
+            if (not(options.no_download) and not(file_exists)):
+                 if storage_dict[prod]=="disk":
+                     tmticks=time.time()
+                     tmpfile=("%s/tmp_%s.tmp")%(options.write_dir,tmticks)
+                     print "\nDownload of product : %s"%prod
+                     get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_dict[prod])
+                     print get_product
+                     os.system(get_product)
+                     #check binary product, rename tmp file
+                     if not os.path.exists(("%s/tmp_%s.tmp")%(options.write_dir,tmticks)):
+                         NbProdsToDownload+=1
+                     else:
+                        check_rename(tmpfile,options)
+
+            elif file_exists:
+                print "%s already exists"%prod
+            elif options.no_download:
+                print "no download (-n) option was chosen"
+
+        # download all products on tape
+        for prod in download_dict.keys():	
+            file_exists= os.path.exists(("%s/%s.SAFE")%(options.write_dir,prod)) or  os.path.exists(("%s/%s.zip")%(options.write_dir,prod))
+            if (not(options.no_download) and not(file_exists)):
+                if storage_dict[prod]=="tape":
+                    tmticks=time.time()
+                    tmpfile=("%s/tmp_%s.tmp")%(options.write_dir,tmticks)
+                    print "\nDownload of product : %s"%prod
+                    get_product='curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps'%(tmpfile,email,passwd,options.collection,download_dict[prod])
+                    print get_product
                     os.system(get_product)
                     if not os.path.exists(("%s/tmp_%s.tmp")%(options.write_dir,tmticks)):
-                        if attempt==(options.nb_attempts-1):
-                            print "*********download timed out**********"
-                            sys.exit(-2)
-                        time.sleep(180)
+                         NbProdsToDownload+=1
                     else:
-                        break
+                        check_rename(tmpfile,options)
                         
-            else :
-                os.system(get_product)
-            #check if binary product
-	    with open(tmpfile) as f_tmp:
-		try:
-		    tmp_data=json.load(f_tmp)
-                    print "Result is a text file (might come from a wrong password file)"
-                    print tmp_data
-                    sys.exit(-1)
-		except ValueError:
-		    pass
-	    
-	    os.rename("%s"%tmpfile,"%s/%s.zip"%(options.write_dir,prod))
-	    print "product saved as : %s/%s.zip"%(options.write_dir,prod)
-	elif file_exists:
-	    print "%s already exists"%prod
-	elif options.no_download:
-	    print "no download (-n) option was chosen"
+        print "##############################################################################"               
+        print "%d remaining products are on tape, lets's wait 2 minutes before trying again"% NbProdsToDownload
+        print "##############################################################################"               
+
+        time.sleep(120)
+
 
