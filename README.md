@@ -37,9 +37,9 @@ This software is still quite basic, but if you have an account at PEPS, you may 
 - `python ./peps_download.py -c S1 -p GRD -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01`
 which downloads S1 GRD products above Toulouse
 
-##Authentification 
+## Authentification 
 
-The file peps.txt must contain your email address and your password on the same line, such as follows :
+The file peps.txt must contain your email address and your password on the same line, such as :
 `your.email@address.fr top_secret`
 
 To get an account : https://peps.cnes.fr/rocket/#/register
