@@ -39,7 +39,8 @@ which downloads S1 GRD products above Toulouse
 
 ## Authentification 
 
-The file peps.txt must contain your email address and your password on the same line, such as :
+The file peps.txt must contain your email address and your password on the same line, such as:
+
 `your.email@address.fr top_secret`
 
 To get an account : https://peps.cnes.fr/rocket/#/register
