@@ -178,9 +178,9 @@ elif geom == 'location':
     query_geom = "q=%s" % options.location
 
 # date parameters of catalog request
-if options.start_date != None:
+if options.start_date is not None:
     start_date = options.start_date
-    if options.end_date != None:
+    if options.end_date is not None:
         end_date = options.end_date
     else:
         end_date = date.today().isoformat()
