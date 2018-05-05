@@ -138,7 +138,7 @@ else:
     parser.add_option("-o", "--orbit", dest="orbit", action="store", type="int",
                       help="Orbit Path number", default=None)
     parser.add_option("-f", "--end_date", dest="end_date", action="store", type="string",
-                      help="end date, fmt('2015-12-23')", default=None)
+                      help="end date, fmt('2015-12-23')", default='9999-01-01')
     parser.add_option("--json", dest="search_json_file", action="store", type="string",
                       help="Output search JSON filename", default=None)
 
@@ -147,7 +147,7 @@ else:
 if options.search_json_file == None or options.search_json_file == "":
     options.search_json_file = 'search.json'
 
-if options.location == None:
+if options.location is None:
     if options.lat == None or options.lon == None:
         if options.latmin == None or options.lonmin == None or options.latmax == None or options.lonmax == None:
             print("provide at least a point or rectangle")
