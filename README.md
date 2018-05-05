@@ -4,7 +4,7 @@ This is a simple piece of code to automatically download the products provided b
 
 This code was written thanks to the precious help of one my colleagues at CNES [Jérôme Gasperi](https://www.linkedin.com/pulse/rocket-earth-your-pocket-gasperi-jerome) who developped the "rocket" interface which is used by Peps.
 
-This code relies on python 2.7 and on the curl utility. Because of that, I guess it only works with linux.
+This code relies on python 2.7 **(however, I just created a Python3 branch, which seems to work but was not much tested)**, and on the curl utility. I am not sure it can work on windows.
 
 Only the recent PEPS products or the frequently accessed ones are stored on disks (2 PB), while the rest is stored on tapes (up to 14 PB). Data stored on tapes have an access time increased by 2 to 6 mn. **From the 23rd of March, peps_download has been fully reshaped to first stage products on tapes for download, then download products on disk, which gives some time to upload the tape products on disks. This procedures considerably speeds the downloads up.**
  
