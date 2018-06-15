@@ -44,39 +44,43 @@ def parse_catalog(search_json_file):
     #Sort data
     download_dict={}
     storage_dict={}
-    for i in range(len(data["features"])):
-        prod      =data["features"][i]["properties"]["productIdentifier"]
-        print prod, data["features"][i]["properties"]["storage"]["mode"]
-        feature_id=data["features"][i]["id"]
-        try :
-            storage   =data["features"][i]["properties"]["storage"]["mode"]
-            platform  =data["features"][i]["properties"]["platform"]
-            #recup du numero d'orbite
-            orbitN=data["features"][i]["properties"]["orbitNumber"]
-            if platform=='S1A':
-            #calcul de l'orbite relative pour Sentinel 1A
-                relativeOrbit=((orbitN-73)%175)+1
-            elif platform=='S1B':
-            #calcul de l'orbite relative pour Sentinel 1B
-                relativeOrbit=((orbitN-27)%175)+1
+    if len(data["features"])>0:
+        for i in range(len(data["features"])):
+            prod      =data["features"][i]["properties"]["productIdentifier"]
+            print prod, data["features"][i]["properties"]["storage"]["mode"]
+            feature_id=data["features"][i]["id"]
+            try :
+                storage   =data["features"][i]["properties"]["storage"]["mode"]
+                platform  =data["features"][i]["properties"]["platform"]
+                #recup du numero d'orbite
+                orbitN=data["features"][i]["properties"]["orbitNumber"]
+                if platform=='S1A':
+                #calcul de l'orbite relative pour Sentinel 1A
+                    relativeOrbit=((orbitN-73)%175)+1
+                elif platform=='S1B':
+                #calcul de l'orbite relative pour Sentinel 1B
+                    relativeOrbit=((orbitN-27)%175)+1
 
-            #print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"],storage
+                #print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"],storage
 
-            if options.orbit!=None:
-                if platform.startswith('S2'):
-                    if prod.find("_R%03d"%options.orbit)>0:
+                if options.orbit!=None:
+                    if platform.startswith('S2'):
+                        if prod.find("_R%03d"%options.orbit)>0:
 
-                        download_dict[prod]=feature_id
-                        storage_dict[prod]=storage
-                elif platform.startswith('S1'):
-                    if relativeOrbit==options.orbit:
-                        download_dict[prod]=feature_id
-                        storage_dict[prod]=storage
-            else:
-                download_dict[prod]=feature_id
-                storage_dict[prod]=storage
-        except:
-            pass
+                            download_dict[prod]=feature_id
+                            storage_dict[prod]=storage
+                    elif platform.startswith('S1'):
+                        if relativeOrbit==options.orbit:
+                            download_dict[prod]=feature_id
+                            storage_dict[prod]=storage
+                else:
+                    download_dict[prod]=feature_id
+                    storage_dict[prod]=storage
+            except:
+                pass
+    else:
+        print ">>> no product corresponds to selection criteria"
+        sys.exit(-1)
     return(prod,download_dict,storage_dict)
 ########################################################################### MAIN
 
@@ -268,7 +272,7 @@ else:
             search_catalog='curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s'%(options.search_json_file,options.collection,query_geom,start_date,end_date,options.product_type,options.sensor_mode)
 
         os.system(search_catalog)
-        time.sleep(2)
+        time.sleep(5)
 
         prod,download_dict,storage_dict=parse_catalog(options.search_json_file)
 
