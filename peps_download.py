@@ -146,6 +146,8 @@ else:
                       help="end date, fmt('2015-12-23')", default='9999-01-01')
     parser.add_option("--json", dest="search_json_file", action="store", type="string",
                       help="Output search JSON filename", default=None)
+    parser.add_option("--windows", dest="windows", action="store_true",
+                    help="For windows usage",default=False)
 
     (options, args) = parser.parse_args()
 
@@ -238,6 +240,8 @@ else:
     search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
         options.search_json_file, options.collection, query_geom, start_date, end_date, options.product_type, options.sensor_mode)
 
+if options.windows :
+    search_catalog = search_catalog.replace('\&','^&')
 
 print(search_catalog)
 os.system(search_catalog)
@@ -281,6 +285,9 @@ else:
         else:
             search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
                 options.search_json_file, options.collection, query_geom, start_date, end_date, options.product_type, options.sensor_mode)
+
+        if options.windows :
+            search_catalog = search_catalog.replace('\&','^&')
 
         os.system(search_catalog)
         time.sleep(2)
