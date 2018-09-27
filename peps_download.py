@@ -111,7 +111,7 @@ else :
     parser.add_option("-c","--collection", dest="collection", action="store", type="choice",  \
             help="Collection within theia collections",choices=['S1','S2','S2ST','S3'],default='S2')
     parser.add_option("-p","--product_type", dest="product_type", action="store", type="string", \
-            help="GRD, SLC, OCN (for S1) | S2MSI1C S2MSI2Ap (for S2)",default="")
+            help="GRD, SLC, OCN (for S1) | S2MSI1C S2MSI2A S2MSI2Ap (for S2)",default="")
     parser.add_option("-m","--sensor_mode", dest="sensor_mode", action="store", type="string", \
             help="EW, IW , SM, WV (for S1) | INS-NOBS, INS-RAW (for S2)",default="")
     parser.add_option("-n","--no_download", dest="no_download", action="store_true",  \
