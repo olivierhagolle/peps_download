@@ -328,8 +328,8 @@ else:
 
         if NbProdsToDownload > 0:
             print("##############################################################################")
-            print("%d remaining products are on tape, lets's wait 2 minutes before trying again" % NbProdsToDownload)
+            print("%d remaining products are on tape, lets's wait 1 minute before trying again" % NbProdsToDownload)
             print("##############################################################################")
-            time.sleep(120)
+            time.sleep(60)
 
 
