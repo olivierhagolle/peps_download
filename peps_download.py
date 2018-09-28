@@ -272,6 +272,8 @@ else:
                 get_product = 'curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps &>/dev/null' % (
                     tmpfile, email, passwd, options.collection, download_dict[prod])
                 os.system(get_product)
+                if os.path.exists(tmpfile):
+                    os.remove(tmpfile)
 
     NbProdsToDownload = len(list(download_dict.keys()))
     print("##########################")
@@ -322,17 +324,7 @@ else:
                                          ) or os.path.exists(("%s/%s.zip") % (options.write_dir, prod))
             if (not(options.no_download) and not(file_exists)):
                 if storage_dict[prod] == "tape" or storage_dict[prod] == "staging" :
-                    tmticks = time.time()
-                    tmpfile = ("%s/tmp_%s.tmp") % (options.write_dir, tmticks)
-                    print("\nDownload of product : %s" % prod)
-                    get_product = 'curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps' % (
-                        tmpfile, email, passwd, options.collection, download_dict[prod])
-                    print(get_product)
-                    os.system(get_product)
-                    if not os.path.exists(("%s/tmp_%s.tmp") % (options.write_dir, tmticks)):
-                        NbProdsToDownload += 1
-                    else:
-                        check_rename(tmpfile, options)
+                    NbProdsToDownload += 1
 
         if NbProdsToDownload > 0:
             print("##############################################################################")
