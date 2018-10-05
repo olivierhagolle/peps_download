@@ -22,19 +22,22 @@ class OptionParser (optparse.OptionParser):
 
 
 ###########################################################################
-def check_rename(tmpfile, options):
-
-    with open(tmpfile) as f_tmp:
-        try:
-            tmp_data = json.load(f_tmp)
-            print("Result is a text file (might come from a wrong password file)")
-            print(tmp_data)
-            sys.exit(-1)
-        except ValueError:
-            pass
-
-    os.rename("%s" % tmpfile, "%s/%s.zip" % (options.write_dir, prod))
-    print("product saved as : %s/%s.zip" % (options.write_dir, prod))
+def check_rename(tmpfile, prodsize, options):
+    print(os.path.getsize(tmpfile), prodsize)
+    if os.path.getsize(tmpfile) != prodsize:
+        with open(tmpfile) as f_tmp:
+            try:
+                tmp_data = json.load(f_tmp)
+                print("Result is a json file (might come from a wrong password file)")
+                print(tmp_data)
+                sys.exit(-1)
+            except ValueError:
+                print("\ndownload was not complete, tmp file removed")
+                os.remove(tmpfile)
+                pass
+    else:
+        os.rename("%s" % tmpfile, "%s/%s.zip" % (options.write_dir, prod))
+        print("product saved as : %s/%s.zip" % (options.write_dir, prod))
 
 ###########################################################################
 
@@ -51,6 +54,7 @@ def parse_catalog(search_json_file):
     # Sort data
     download_dict = {}
     storage_dict = {}
+    size_dict = {}
     if len(data["features"])>0:
         for i in range(len(data["features"])):
             prod = data["features"][i]["properties"]["productIdentifier"]
@@ -59,6 +63,7 @@ def parse_catalog(search_json_file):
             try:
                 storage = data["features"][i]["properties"]["storage"]["mode"]
                 platform = data["features"][i]["properties"]["platform"]
+                resourceSize = int(data["features"][i]["properties"]["resourceSize"])
                 # recup du numero d'orbite
                 orbitN = data["features"][i]["properties"]["orbitNumber"]
                 if platform == 'S1A':
@@ -73,23 +78,25 @@ def parse_catalog(search_json_file):
                 if options.orbit is not None:
                     if platform.startswith('S2'):
                         if prod.find("_R%03d" % options.orbit) > 0:
-
                             download_dict[prod] = feature_id
                             storage_dict[prod] = storage
+                            size_dict[prod] = resourceSize
                     elif platform.startswith('S1'):
                         if relativeOrbit == options.orbit:
                             download_dict[prod] = feature_id
                             storage_dict[prod] = storage
+                            size_dict[prod] = resourceSize
                 else:
                     download_dict[prod] = feature_id
                     storage_dict[prod] = storage
+                    size_dict[prod] = resourceSize
             except:
                 pass
     else:
         print(">>> no product corresponds to selection criteria")
         sys.exit(-1)
 
-    return(prod, download_dict, storage_dict)
+    return(prod, download_dict, storage_dict, size_dict)
 
 # ===================== MAIN
 # ==================
@@ -128,6 +135,8 @@ else:
                       help="Do not download products, just print curl command", default=False)
     parser.add_option("-d", "--start_date", dest="start_date", action="store", type="string",
                       help="start date, fmt('2015-12-22')", default=None)
+    parser.add_option("-t", "--tile", dest="tile", action="store", type="string",
+                      help="Sentinel-2 tile number", default=None)
     parser.add_option("--lat", dest="lat", action="store", type="float",
                       help="latitude in decimal degrees", default=None)
     parser.add_option("--lon", dest="lon", action="store", type="float",
@@ -154,36 +163,46 @@ else:
 if options.search_json_file is None or options.search_json_file == "":
     options.search_json_file = 'search.json'
 
-if options.location is None:
-    if options.lat is None or options.lon is None:
-        if (options.latmin is None) or (options.lonmin is None) or (options.latmax is None) or (options.lonmax is None):
-            print("provide at least a point or rectangle")
-            sys.exit(-1)
+if options.tile is None:
+    if options.location is None:
+        if options.lat is None or options.lon is None:
+            if (options.latmin is None) or (options.lonmin is None) or (options.latmax is None) or (options.lonmax is None):
+                print("provide at least a point or rectangle or tile number")
+                sys.exit(-1)
+            else:
+                geom = 'rectangle'
         else:
-            geom = 'rectangle'
+            if (options.latmin is None) and (options.lonmin is None) and (options.latmax is None) and (options.lonmax is None):
+                geom = 'point'
+            else:
+                print("please choose between point and rectangle, but not both")
+                sys.exit(-1)
     else:
-        if (options.latmin is None) and (options.lonmin is None) and (options.latmax is None) and (options.lonmax is None):
-            geom = 'point'
+        if (options.latmin is None) and (options.lonmin is None) and (options.latmax is None) and (options.lonmax is None) and (options.lat is None) or (options.lon is None):
+            geom = 'location'
         else:
-            print("please choose between point and rectangle, but not both")
+            print("please choose location and coordinates, but not both")
             sys.exit(-1)
-
-else:
-    if (options.latmin is None) and (options.lonmin is None) and (options.latmax is None) and (options.lonmax is None) and (options.lat is None) or (options.lon is None):
-        geom = 'location'
-    else:
-        print("please choose location and coordinates, but not both")
-        sys.exit(-1)
 
 # geometric parameters of catalog request
-if geom == 'point':
+
+if options.tile is not None:
+    if options.tile.startswith('T') and len(options.tile)==6:
+        tileid = options.tile[1:6]
+    elif len(options.tile)==5:
+        tileid = options.tile[0:5]
+    else:
+        print("tile name is ill-formated : 31TCJ or T31TCJ are allowed")
+        sys.exit(-4)
+    query_geom="tileid=%s"%(tileid)
+elif geom == 'point':
     query_geom = 'lat=%f\&lon=%f' % (options.lat, options.lon)
 elif geom == 'rectangle':
     query_geom = 'box={lonmin},{latmin},{lonmax},{latmax}'.format(
         latmin=options.latmin, latmax=options.latmax, lonmin=options.lonmin, lonmax=options.lonmax)
 elif geom == 'location':
     query_geom = "q=%s" % options.location
-
+    
 # date parameters of catalog request
 if options.start_date is not None:
     start_date = options.start_date
@@ -247,7 +266,7 @@ print(search_catalog)
 os.system(search_catalog)
 time.sleep(5)
 
-prod, download_dict, storage_dict = parse_catalog(options.search_json_file)
+prod, download_dict, storage_dict, size_dict = parse_catalog(options.search_json_file)
 
 # ====================
 # Download
@@ -294,7 +313,7 @@ else:
         os.system(search_catalog)
         time.sleep(2)
 
-        prod, download_dict, storage_dict = parse_catalog(options.search_json_file)
+        prod, download_dict, storage_dict, size_dict = parse_catalog(options.search_json_file)
 
         NbProdsToDownload = 0
         # download all products on disk
@@ -313,7 +332,7 @@ else:
                     if not os.path.exists(("%s/tmp_%s.tmp") % (options.write_dir, tmticks)):
                         NbProdsToDownload += 1
                     else:
-                        check_rename(tmpfile, options)
+                         check_rename(tmpfile, size_dict[prod], options)
 
             elif file_exists:
                 print("%s already exists" % prod)
