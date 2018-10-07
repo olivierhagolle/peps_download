@@ -288,7 +288,7 @@ else:
                 tmticks = time.time()
                 tmpfile = ("%s/tmp_%s.tmp") % (options.write_dir, tmticks)
                 print("\nStage tape product: %s" % prod)
-                get_product = 'curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps &>/dev/null' % (
+                get_product = 'curl -o %s -k -u "%s:%s" https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps &>/dev/null' % (
                     tmpfile, email, passwd, options.collection, download_dict[prod])
                 os.system(get_product)
                 if os.path.exists(tmpfile):
@@ -324,7 +324,7 @@ else:
                     tmticks = time.time()
                     tmpfile = ("%s/tmp_%s.tmp") % (options.write_dir, tmticks)
                     print("\nDownload of product : %s" % prod)
-                    get_product = 'curl -o %s -k -u %s:%s https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps' % (
+                    get_product = 'curl -o %s -k -u "%s:%s" https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps' % (
                         tmpfile, email, passwd, options.collection, download_dict[prod])
                     print(get_product)
                     os.system(get_product)
