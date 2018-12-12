@@ -55,7 +55,7 @@ def parse_catalog(search_json_file):
     download_dict = {}
     storage_dict = {}
     size_dict = {}
-    if len(data["features"])>0:
+    if len(data["features"]) > 0:
         for i in range(len(data["features"])):
             prod = data["features"][i]["properties"]["productIdentifier"]
             print(prod, data["features"][i]["properties"]["storage"]["mode"])
@@ -64,32 +64,35 @@ def parse_catalog(search_json_file):
                 storage = data["features"][i]["properties"]["storage"]["mode"]
                 platform = data["features"][i]["properties"]["platform"]
                 resourceSize = int(data["features"][i]["properties"]["resourceSize"])
-                # recup du numero d'orbite
-                orbitN = data["features"][i]["properties"]["orbitNumber"]
-                if platform == 'S1A':
-                    # calcul de l'orbite relative pour Sentinel 1A
-                    relativeOrbit = ((orbitN - 73) % 175) + 1
-                elif platform == 'S1B':
-                    # calcul de l'orbite relative pour Sentinel 1B
-                    relativeOrbit = ((orbitN - 27) % 175) + 1
-
-            # print data["features"][i]["properties"]["productIdentifier"],data["features"][i]["id"],data["features"][i]["properties"]["startDate"],storage
-
-                if options.orbit is not None:
-                    if platform.startswith('S2'):
-                        if prod.find("_R%03d" % options.orbit) > 0:
-                            download_dict[prod] = feature_id
-                            storage_dict[prod] = storage
-                            size_dict[prod] = resourceSize
-                    elif platform.startswith('S1'):
-                        if relativeOrbit == options.orbit:
-                            download_dict[prod] = feature_id
-                            storage_dict[prod] = storage
-                            size_dict[prod] = resourceSize
+                if storage == "unknown":
+                    print('found a product with "unknown" status : %s' % prod)
+                    print("product %s cannot be downloaded" % prod)
+                    print('please send and email with product name to peps admin team : exppeps@cnes.fr')
                 else:
-                    download_dict[prod] = feature_id
-                    storage_dict[prod] = storage
-                    size_dict[prod] = resourceSize
+                    # recup du numero d'orbite
+                    orbitN = data["features"][i]["properties"]["orbitNumber"]
+                    if platform == 'S1A':
+                        # calcul de l'orbite relative pour Sentinel 1A
+                        relativeOrbit = ((orbitN - 73) % 175) + 1
+                    elif platform == 'S1B':
+                        # calcul de l'orbite relative pour Sentinel 1B
+                        relativeOrbit = ((orbitN - 27) % 175) + 1
+
+                    if options.orbit is not None:
+                        if platform.startswith('S2'):
+                            if prod.find("_R%03d" % options.orbit) > 0:
+                                download_dict[prod] = feature_id
+                                storage_dict[prod] = storage
+                                size_dict[prod] = resourceSize
+                        elif platform.startswith('S1'):
+                            if relativeOrbit == options.orbit:
+                                download_dict[prod] = feature_id
+                                storage_dict[prod] = storage
+                                size_dict[prod] = resourceSize
+                    else:
+                        download_dict[prod] = feature_id
+                        storage_dict[prod] = storage
+                        size_dict[prod] = resourceSize
             except:
                 pass
     else:
@@ -97,6 +100,7 @@ def parse_catalog(search_json_file):
         sys.exit(-1)
 
     return(prod, download_dict, storage_dict, size_dict)
+
 
 # ===================== MAIN
 # ==================
@@ -107,13 +111,16 @@ if len(sys.argv) == 1:
     print('      ' + sys.argv[0] + ' [options]')
     print("     Aide : ", prog, " --help")
     print("        ou : ", prog, " -h")
-    print("example 1 : python %s -l 'Toulouse' -a peps.txt -d 2016-12-06 -f 2017-02-01 -c S2ST" % sys.argv[0])
-    print("example 2 : python %s --lon 1 --lat 44 -a peps.txt -d 2015-11-01 -f 2015-12-01 -c S2" % sys.argv[0])
+    print("example 1 : python %s -l 'Toulouse' -a peps.txt -d 2016-12-06 -f 2017-02-01 -c S2ST" %
+          sys.argv[0])
+    print("example 2 : python %s --lon 1 --lat 44 -a peps.txt -d 2015-11-01 -f 2015-12-01 -c S2" %
+          sys.argv[0])
     print("example 3 : python %s --lonmin 1 --lonmax 2 --latmin 43 --latmax 44 -a peps.txt -d 2015-11-01 -f 2015-12-01 -c S2" %
           sys.argv[0])
     print("example 4 : python %s -l 'Toulouse' -a peps.txt -c SpotWorldHeritage -p SPOT4 -d 2005-11-01 -f 2006-12-01" %
           sys.argv[0])
-    print("example 5 : python %s -c S1 -p GRD -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01" % sys.argv[0])
+    print("example 5 : python %s -c S1 -p GRD -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01" %
+          sys.argv[0])
     sys.exit(-1)
 else:
     usage = "usage: %prog [options] "
@@ -156,7 +163,7 @@ else:
     parser.add_option("--json", dest="search_json_file", action="store", type="string",
                       help="Output search JSON filename", default=None)
     parser.add_option("--windows", dest="windows", action="store_true",
-                    help="For windows usage",default=False)
+                      help="For windows usage", default=False)
 
     (options, args) = parser.parse_args()
 
@@ -187,14 +194,14 @@ if options.tile is None:
 # geometric parameters of catalog request
 
 if options.tile is not None:
-    if options.tile.startswith('T') and len(options.tile)==6:
+    if options.tile.startswith('T') and len(options.tile) == 6:
         tileid = options.tile[1:6]
-    elif len(options.tile)==5:
+    elif len(options.tile) == 5:
         tileid = options.tile[0:5]
     else:
         print("tile name is ill-formated : 31TCJ or T31TCJ are allowed")
         sys.exit(-4)
-    query_geom="tileid=%s"%(tileid)
+    query_geom = "tileid=%s" % (tileid)
 elif geom == 'point':
     query_geom = 'lat=%f\&lon=%f' % (options.lat, options.lon)
 elif geom == 'rectangle':
@@ -202,7 +209,7 @@ elif geom == 'rectangle':
         latmin=options.latmin, latmax=options.latmax, lonmin=options.lonmin, lonmax=options.lonmax)
 elif geom == 'location':
     query_geom = "q=%s" % options.location
-    
+
 # date parameters of catalog request
 if options.start_date is not None:
     start_date = options.start_date
@@ -221,7 +228,7 @@ if options.collection == 'S2':
         print("**** products after '2016-12-05' are stored in Tiled products collection")
         print("**** please use option -c S2ST to get the products after that date")
         print("**** products before that date will be downloaded")
- 
+
 if options.collection == 'S2ST':
     if options.end_date < '2016-12-05':
         print("**** products before '2016-12-05' are stored in non-tiled products collection")
@@ -230,7 +237,7 @@ if options.collection == 'S2ST':
         print("**** products before '2016-12-05' are stored in non-tiled products collection")
         print("**** please use option -c S2 to get the products before that date")
         print("**** products after that date will be downloaded")
- 
+
 # ====================
 # read authentification file
 # ====================
@@ -247,7 +254,7 @@ except:
 
 if os.path.exists(options.search_json_file):
     os.remove(options.search_json_file)
-    
+
 
 # ====================
 # search in catalog
@@ -259,8 +266,8 @@ else:
     search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
         options.search_json_file, options.collection, query_geom, start_date, end_date, options.product_type, options.sensor_mode)
 
-if options.windows :
-    search_catalog = search_catalog.replace('\&','^&')
+if options.windows:
+    search_catalog = search_catalog.replace('\&', '^&')
 
 print(search_catalog)
 os.system(search_catalog)
@@ -307,8 +314,8 @@ else:
             search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
                 options.search_json_file, options.collection, query_geom, start_date, end_date, options.product_type, options.sensor_mode)
 
-        if options.windows :
-            search_catalog = search_catalog.replace('\&','^&')
+        if options.windows:
+            search_catalog = search_catalog.replace('\&', '^&')
 
         os.system(search_catalog)
         time.sleep(2)
@@ -318,7 +325,8 @@ else:
         NbProdsToDownload = 0
         # download all products on disk
         for prod in list(download_dict.keys()):
-            file_exists = os.path.exists(("%s/%s.SAFE") % (options.write_dir, prod)) or os.path.exists(("%s/%s.zip") % (options.write_dir, prod))
+            file_exists = os.path.exists(("%s/%s.SAFE") % (options.write_dir, prod)
+                                         ) or os.path.exists(("%s/%s.zip") % (options.write_dir, prod))
             if (not(options.no_download) and not(file_exists)):
                 if storage_dict[prod] == "disk":
                     tmticks = time.time()
@@ -332,7 +340,7 @@ else:
                     if not os.path.exists(("%s/tmp_%s.tmp") % (options.write_dir, tmticks)):
                         NbProdsToDownload += 1
                     else:
-                         check_rename(tmpfile, size_dict[prod], options)
+                        check_rename(tmpfile, size_dict[prod], options)
 
             elif file_exists:
                 print("%s already exists" % prod)
@@ -342,13 +350,12 @@ else:
             file_exists = os.path.exists(("%s/%s.SAFE") % (options.write_dir, prod)
                                          ) or os.path.exists(("%s/%s.zip") % (options.write_dir, prod))
             if (not(options.no_download) and not(file_exists)):
-                if storage_dict[prod] == "tape" or storage_dict[prod] == "staging" :
+                if storage_dict[prod] == "tape" or storage_dict[prod] == "staging":
                     NbProdsToDownload += 1
 
         if NbProdsToDownload > 0:
             print("##############################################################################")
-            print("%d remaining products are on tape, lets's wait 1 minute before trying again" % NbProdsToDownload)
+            print("%d remaining products are on tape, lets's wait 1 minute before trying again" %
+                  NbProdsToDownload)
             print("##############################################################################")
             time.sleep(60)
-
-
