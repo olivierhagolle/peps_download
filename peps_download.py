@@ -58,7 +58,7 @@ def parse_catalog(search_json_file):
     if len(data["features"]) > 0:
         for i in range(len(data["features"])):
             prod = data["features"][i]["properties"]["productIdentifier"]
-            print(prod, data["features"][i]["properties"]["storage"]["mode"])
+            #print(prod, data["features"][i]["properties"]["storage"]["mode"])
             feature_id = data["features"][i]["id"]
             try:
                 storage = data["features"][i]["properties"]["storage"]["mode"]
@@ -84,6 +84,7 @@ def parse_catalog(search_json_file):
                                 download_dict[prod] = feature_id
                                 storage_dict[prod] = storage
                                 size_dict[prod] = resourceSize
+                                
                         elif platform.startswith('S1'):
                             if relativeOrbit == options.orbit:
                                 download_dict[prod] = feature_id
@@ -93,12 +94,24 @@ def parse_catalog(search_json_file):
                         download_dict[prod] = feature_id
                         storage_dict[prod] = storage
                         size_dict[prod] = resourceSize
+
             except:
                 pass
+            
+        # cloud cover criterium:
+        if options.collection[0:2] == 'S2':
+            for i in range(len(data["features"])):
+                prod = data["features"][i]["properties"]["productIdentifier"]
+                if data["features"][i]["properties"]["cloudCover"]>options.clouds:
+                    del download_dict[prod], storage_dict[prod], size_dict[prod]
+                    
+        for i in range(len(download_dict.keys())):
+            print(prod, data["features"][i]["properties"]["storage"]["mode"])    
     else:
         print(">>> no product corresponds to selection criteria")
         sys.exit(-1)
-
+#    print(download_dict.keys())
+    
     return(prod, download_dict, storage_dict, size_dict)
 
 
@@ -164,6 +177,8 @@ else:
                       help="Output search JSON filename", default=None)
     parser.add_option("--windows", dest="windows", action="store_true",
                       help="For windows usage", default=False)
+    parser.add_option("--cc", "--clouds", dest="clouds", action="store", type="int",
+                      help="Maximum cloud coverage", default=100)   
 
     (options, args) = parser.parse_args()
 
@@ -237,7 +252,7 @@ if options.collection == 'S2ST':
         print("**** products before '2016-12-05' are stored in non-tiled products collection")
         print("**** please use option -c S2 to get the products before that date")
         print("**** products after that date will be downloaded")
-
+    
 # ====================
 # read authentification file
 # ====================
