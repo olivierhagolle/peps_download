@@ -110,13 +110,10 @@ def parse_catalog(search_json_file):
             for i in range(len(data["features"])):
                 prod = data["features"][i]["properties"]["productIdentifier"]
                 if data["features"][i]["properties"]["platform"] != options.sat:
-                    print(prod, options.sat, "removed")
                     try:
                         del download_dict[prod], storage_dict[prod], size_dict[prod]
                     except KeyError:
                         pass
-                else:
-                    print(prod, options.sat)
 
         for prod in download_dict.keys():
             print(prod, storage_dict[prod])
