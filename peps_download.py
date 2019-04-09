@@ -84,7 +84,7 @@ def parse_catalog(search_json_file):
                                 download_dict[prod] = feature_id
                                 storage_dict[prod] = storage
                                 size_dict[prod] = resourceSize
-                                
+
                         elif platform.startswith('S1'):
                             if relativeOrbit == options.orbit:
                                 download_dict[prod] = feature_id
@@ -97,21 +97,34 @@ def parse_catalog(search_json_file):
 
             except:
                 pass
-            
+
         # cloud cover criterium:
         if options.collection[0:2] == 'S2':
             for i in range(len(data["features"])):
                 prod = data["features"][i]["properties"]["productIdentifier"]
-                if data["features"][i]["properties"]["cloudCover"]>options.clouds:
+                if data["features"][i]["properties"]["cloudCover"] > options.clouds:
                     del download_dict[prod], storage_dict[prod], size_dict[prod]
-                    
-        for i in range(len(download_dict.keys())):
-            print(prod, data["features"][i]["properties"]["storage"]["mode"])    
+
+        # selecion of specific satellite
+        if options.sat != None:
+            for i in range(len(data["features"])):
+                prod = data["features"][i]["properties"]["productIdentifier"]
+                if data["features"][i]["properties"]["platform"] != options.sat:
+                    print(prod, options.sat, "removed")
+                    try:
+                        del download_dict[prod], storage_dict[prod], size_dict[prod]
+                    except KeyError:
+                        pass
+                else:
+                    print(prod, options.sat)
+
+        for prod in download_dict.keys():
+            print(prod, storage_dict[prod])
     else:
         print(">>> no product corresponds to selection criteria")
         sys.exit(-1)
 #    print(download_dict.keys())
-    
+
     return(prod, download_dict, storage_dict, size_dict)
 
 
@@ -178,12 +191,19 @@ else:
     parser.add_option("--windows", dest="windows", action="store_true",
                       help="For windows usage", default=False)
     parser.add_option("--cc", "--clouds", dest="clouds", action="store", type="int",
-                      help="Maximum cloud coverage", default=100)   
-
+                      help="Maximum cloud coverage", default=100)
+    parser.add_option("--sat", "--satellite", dest="sat", action="store", type="string",
+                      help="S1A,S1B,S2A,S2B,S3A,S3B", default=None)
     (options, args) = parser.parse_args()
 
 if options.search_json_file is None or options.search_json_file == "":
     options.search_json_file = 'search.json'
+
+if options.sat != None:
+    print(options.sat, options.collection[0:2])
+    if not options.sat.startswith(options.collection[0:2]):
+        print("input parameters collection and satellite are incompatible")
+        sys.exit(-1)
 
 if options.tile is None:
     if options.location is None:
@@ -252,7 +272,7 @@ if options.collection == 'S2ST':
         print("**** products before '2016-12-05' are stored in non-tiled products collection")
         print("**** please use option -c S2 to get the products before that date")
         print("**** products after that date will be downloaded")
-    
+
 # ====================
 # read authentification file
 # ====================
@@ -321,7 +341,7 @@ else:
     print("%d  products to download" % NbProdsToDownload)
     print("##########################")
     while (NbProdsToDownload > 0):
-       # redo catalog search to update disk/tape status
+        # redo catalog search to update disk/tape status
         if (options.product_type == "") and (options.sensor_mode == ""):
             search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500' % (
                 options.search_json_file, options.collection, query_geom, start_date, end_date)
