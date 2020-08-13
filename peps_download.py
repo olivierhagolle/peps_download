@@ -6,6 +6,7 @@ import os
 import os.path
 import optparse
 import sys
+import zipfile
 from datetime import date
 
 ###########################################################################
@@ -36,8 +37,28 @@ def check_rename(tmpfile, prodsize, options):
                 os.remove(tmpfile)
                 pass
     else:
-        os.rename("%s" % tmpfile, "%s/%s.zip" % (options.write_dir, prod))
-        print("product saved as : %s/%s.zip" % (options.write_dir, prod))
+        zfile = "%s/%s.zip" % (options.write_dir, prod)
+        os.rename(tmpfile, zfile)
+
+    if options.extract:
+        try:
+            with zipfile.ZipFile(zfile, 'r') as zf:
+                safename = zf.namelist()[0].replace('/', '')
+                zf.extractall(options.write_dir)
+            safedir = os.path.join(options.write_dir, safename)
+            if not os.path.isdir(safedir):
+                raise Exception('Unzipped directory not found: ', zfile)
+
+        except Exception as e:
+            print(e)
+            print('Could not unzip file: ' + zfile)
+            print('File is not removed.')
+        else:
+            print('product saved as : ' + safedir)
+            os.remove(zfile)
+            return
+
+    print("product saved as : " + zfile)
 
 ###########################################################################
 
@@ -191,6 +212,8 @@ else:
                       help="Maximum cloud coverage", default=100)
     parser.add_option("--sat", "--satellite", dest="sat", action="store", type="string",
                       help="S1A,S1B,S2A,S2B,S3A,S3B", default=None)
+    parser.add_option("-x", "--extract", dest="extract", action="store_true",
+                      help="Extract and remove zip file after download")
     (options, args) = parser.parse_args()
 
 if options.search_json_file is None or options.search_json_file == "":
