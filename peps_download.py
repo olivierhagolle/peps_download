@@ -35,7 +35,7 @@ def check_rename(tmpfile, prodsize, options):
             except ValueError:
                 print("\ndownload was not complete, tmp file removed")
                 os.remove(tmpfile)
-                pass
+                return
     else:
         zfile = "%s/%s.zip" % (options.write_dir, prod)
         os.rename(tmpfile, zfile)
@@ -52,7 +52,6 @@ def check_rename(tmpfile, prodsize, options):
         except Exception as e:
             print(e)
             print('Could not unzip file: ' + zfile)
-            print('File is not removed.')
         else:
             print('product saved as : ' + safedir)
             os.remove(zfile)
