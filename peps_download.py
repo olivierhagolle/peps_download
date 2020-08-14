@@ -40,7 +40,7 @@ def check_rename(tmpfile, prodsize, options):
         zfile = "%s/%s.zip" % (options.write_dir, prod)
         os.rename(tmpfile, zfile)
 
-    if options.extract:
+    if options.extract and os.path.exists(zfile):
         try:
             with zipfile.ZipFile(zfile, 'r') as zf:
                 safename = zf.namelist()[0].replace('/', '')
@@ -52,6 +52,8 @@ def check_rename(tmpfile, prodsize, options):
         except Exception as e:
             print(e)
             print('Could not unzip file: ' + zfile)
+            os.remove(zfile)
+            print('Zip file removed.')
         else:
             print('product saved as : ' + safedir)
             os.remove(zfile)
