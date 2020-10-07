@@ -10,6 +10,10 @@ import zipfile
 from datetime import date
 import platform as os_platform
 
+try:
+    import geopandas as gpd
+except ImportError:
+    print('Package "geopandas" could not be imported: argument "shape" will not be supported.')
 ###########################################################################
 
 
@@ -217,6 +221,8 @@ def parse_command_line():
                           help="min longitude in decimal degrees", default=None)
         parser.add_option("--lonmax", dest="lonmax", action="store", type="float",
                           help="max longitude in decimal degrees", default=None)
+        parser.add_option("--shape", dest="shape", action="store", type="string",
+                          help="Polygon file that defines the bounding box", default=None)
         parser.add_option("-o", "--orbit", dest="orbit", action="store", type="int",
                           help="Orbit Path number", default=None)
         parser.add_option("--json", dest="search_json_file", action="store", type="string",
@@ -239,7 +245,7 @@ def parse_command_line():
 
 def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode="", no_download=True,
                   start_date=None, end_date=None, tile=None, location=None,
-                  lat=None, lon=None, latmin=None, latmax=None, lonmin=None, lonmax=None,
+                  lat=None, lon=None, latmin=None, latmax=None, lonmin=None, lonmax=None, shape=None,
                   orbit=None, search_json_file=None, clouds=100, sat=None, extract=False,
                   max_trials=10, wait=1):
     """
@@ -271,6 +277,8 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         latitude or longitude in decimal degrees
     latmin,latmax,lonmin,lonmax: float
         bounding box of an area of interest
+    shape: str
+        Polygon file used to define the extent
     orbit: int
         Orbit Path number
     search_json_file: str
@@ -305,8 +313,11 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         if location is None:
             if lat is None or lon is None:
                 if (latmin is None) or (lonmin is None) or (latmax is None) or (lonmax is None):
-                    raise SysError("provide at least a point or rectangle or tile number", -1)
-                    # sys.exit(-1)
+                    if (shape is None):
+                        raise SysError("provide at least a point or rectangle or tile number", -1)
+                        # sys.exit(-1)
+                    else:
+                        lonmin, latmin, lonmax, latmax = gpd.read_file(shape).to_crs(4326).total_bounds
                 else:
                     geom = 'rectangle'
             else:
