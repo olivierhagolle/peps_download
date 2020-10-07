@@ -12,8 +12,8 @@ import platform as os_platform
 
 try:
     import geopandas as gpd
-except ImportError:
-    print('Package "geopandas" could not be imported: argument "shape" will not be supported.')
+except:
+    pass
 ###########################################################################
 
 
@@ -316,12 +316,14 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                     if (shape is None):
                         raise SysError("provide at least a point or rectangle or tile number or shape", -1)
                         # sys.exit(-1)
+                    elif 'geopandas' not in sys.modules:
+                        raise SysError('Package geopandas is needed to use argument "shape".')
                     else:
                         lonmin, latmin, lonmax, latmax = gpd.read_file(shape).to_crs(4326).total_bounds
-                else:
-                    geom = 'rectangle'
+
+                geom = 'rectangle'
             else:
-                if (latmin is None) and (lonmin is None) and (latmax is None) and (lonmax is None):
+                if (latmin is None) and (lonmin is None) and (latmax is None) and (lonmax is None) and (shape is None):
                     geom = 'point'
                 else:
                     raise SysError("please choose between point and rectangle, but not both", -1)
