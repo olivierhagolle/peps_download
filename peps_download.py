@@ -486,13 +486,14 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                 if (not(no_download) and not(file_exists)):
                     if storage_dict[prod] == "tape" or storage_dict[prod] == "staging":
                         NbProdsToDownload += 1
-    
-            if NbProdsToDownload > 0:
+            n_trials += 1
+            if (NbProdsToDownload > 0) and (n_trials < max_trials):
                 print("##############################################################################")
                 print("%d remaining products are on tape, lets's wait %d minutes before trying again" %
                       NbProdsToDownload, wait)
                 print("##############################################################################")
                 time.sleep(wait*60)
+
 
         return download_dict.keys()
 
