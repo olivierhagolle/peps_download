@@ -243,6 +243,57 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                   lat=None, lon=None, latmin=None, latmax=None, lonmin=None, lonmax=None,
                   orbit=None, search_json_file=None, windows=False, clouds=100, sat=None, extract=False,
                   max_trials=10, wait=1):
+    """
+    Download Sentinel S1, S2 or S3 products from PEPS sever
+
+    Parameters
+    ----------
+    write_dir: str
+        Download directory
+    auth: str
+        Authentication file with Peps account and password
+    collection: str
+        Collection within theia collections: 'S1', 'S2', 'S2ST', 'S3'
+    product_type: str
+        GRD, SLC, OCN (for S1) | S2MSI1C S2MSI2A S2MSI2Ap (for S2)
+    sensor_mode:
+        EW, IW , SM, WV (for S1) | INS-NOBS, INS-RAW (for S3)
+    no_download: bool
+        Do not download products, just print curl command results
+    start_date: str
+        start date, in the format '2015-12-22'
+    end_date: str
+        end date, in the format '2015-12-22'
+    tile: str
+        Sentinel-2 tile number, e.g. 31TCJ or T31TCJ are allowed
+    location: str
+        town name, e.g. 'Toulouse'
+    lat,lon: float
+        latitude or longitude in decimal degrees
+    latmin,latmax,lonmin,lonmax: float
+        bounding box of an area of interest
+    orbit: int
+        Orbit Path number
+    search_json_file: str
+        Output search JSON file path
+    windows: bool
+        For windows usage
+    clouds: int
+        Maximum cloud coverage
+    sat: str
+        S1A,S1B,S2A,S2B,S3A,S3B
+    extract: bool
+        If True, extract and remove zip file after download
+    max_trials: int
+        Maximum number of trials before it stops although files are still not downloaded (on tape or staging)
+    wait: int
+        Number of minutes to wait between trials.
+
+    Returns
+    -------
+    list
+        Product names
+    """
 
     if search_json_file is None or search_json_file == "":
         search_json_file = 'search.json'
@@ -445,6 +496,8 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                       NbProdsToDownload, wait)
                 print("##############################################################################")
                 time.sleep(wait*60)
+
+        return download_dict.keys()
 
 if __name__ == '__main__':
 
