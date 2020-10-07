@@ -454,4 +454,6 @@ if __name__ == '__main__':
     except SysError as e:
         print(e)
         sys.exit(e.exit_code)
+    except Exception as e:
+        raise e
 
