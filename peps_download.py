@@ -8,6 +8,7 @@ import optparse
 import sys
 import zipfile
 from datetime import date
+import platform as os_platform
 
 ###########################################################################
 
@@ -220,8 +221,6 @@ def parse_command_line():
                           help="Orbit Path number", default=None)
         parser.add_option("--json", dest="search_json_file", action="store", type="string",
                           help="Output search JSON filename", default=None)
-        parser.add_option("--windows", dest="windows", action="store_true",
-                          help="For windows usage", default=False)
         parser.add_option("--cc", "--clouds", dest="clouds", action="store", type="int",
                           help="Maximum cloud coverage", default=100)
         parser.add_option("--sat", "--satellite", dest="sat", action="store", type="string",
@@ -241,7 +240,7 @@ def parse_command_line():
 def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode="", no_download=True,
                   start_date=None, end_date=None, tile=None, location=None,
                   lat=None, lon=None, latmin=None, latmax=None, lonmin=None, lonmax=None,
-                  orbit=None, search_json_file=None, windows=False, clouds=100, sat=None, extract=False,
+                  orbit=None, search_json_file=None, clouds=100, sat=None, extract=False,
                   max_trials=10, wait=1):
     """
     Download Sentinel S1, S2 or S3 products from PEPS sever
@@ -276,8 +275,6 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         Orbit Path number
     search_json_file: str
         Output search JSON file path
-    windows: bool
-        For windows usage
     clouds: int
         Maximum cloud coverage
     sat: str
@@ -402,7 +399,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
             search_json_file, collection, query_geom, start_date, end_date, product_type, sensor_mode)
 
-    if windows:
+    if os_platform.system() is 'Windows':
         search_catalog = search_catalog.replace('\&', '^&')
 
     print(search_catalog)
@@ -451,7 +448,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                 search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
                     search_json_file, collection, query_geom, start_date, end_date, product_type, sensor_mode)
 
-            if windows:
+            if os_platform.system() is 'Windows':
                 search_catalog = search_catalog.replace('\&', '^&')
 
             os.system(search_catalog)
