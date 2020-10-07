@@ -184,8 +184,6 @@ def parse_command_line():
         usage = "usage: %prog [options] "
         parser = OptionParser(usage=usage)
 
-        parser.add_option("-l", "--location", dest="location", action="store", type="string",
-                          help="town name (pick one which is not too frequent to avoid confusions)", default=None)
         parser.add_option("-a", "--auth", dest="auth", action="store", type="string",
                           help="Peps account and password file")
         parser.add_option("-w", "--write_dir", dest="write_dir", action="store", type="string",
@@ -200,8 +198,12 @@ def parse_command_line():
                           help="Do not download products, just print curl command", default=False)
         parser.add_option("-d", "--start_date", dest="start_date", action="store", type="string",
                           help="start date, fmt('2015-12-22')", default=None)
+        parser.add_option("-f", "--end_date", dest="end_date", action="store", type="string",
+                          help="end date, fmt('2015-12-23')", default='9999-01-01')
         parser.add_option("-t", "--tile", dest="tile", action="store", type="string",
                           help="Sentinel-2 tile number", default=None)
+        parser.add_option("-l", "--location", dest="location", action="store", type="string",
+                          help="town name (pick one which is not too frequent to avoid confusions)", default=None)
         parser.add_option("--lat", dest="lat", action="store", type="float",
                           help="latitude in decimal degrees", default=None)
         parser.add_option("--lon", dest="lon", action="store", type="float",
@@ -216,8 +218,6 @@ def parse_command_line():
                           help="max longitude in decimal degrees", default=None)
         parser.add_option("-o", "--orbit", dest="orbit", action="store", type="int",
                           help="Orbit Path number", default=None)
-        parser.add_option("-f", "--end_date", dest="end_date", action="store", type="string",
-                          help="end date, fmt('2015-12-23')", default='9999-01-01')
         parser.add_option("--json", dest="search_json_file", action="store", type="string",
                           help="Output search JSON filename", default=None)
         parser.add_option("--windows", dest="windows", action="store_true",
