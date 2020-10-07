@@ -399,7 +399,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
             search_json_file, collection, query_geom, start_date, end_date, product_type, sensor_mode)
 
-    if os_platform.system() is 'Windows':
+    if os_platform.system() == 'Windows':
         search_catalog = search_catalog.replace('\&', '^&')
 
     print(search_catalog)
@@ -448,7 +448,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                 search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
                     search_json_file, collection, query_geom, start_date, end_date, product_type, sensor_mode)
 
-            if os_platform.system() is 'Windows':
+            if os_platform.system() == 'Windows':
                 search_catalog = search_catalog.replace('\&', '^&')
 
             os.system(search_catalog)
