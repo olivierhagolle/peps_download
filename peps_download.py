@@ -222,7 +222,7 @@ def parse_command_line():
         parser.add_option("--lonmax", dest="lonmax", action="store", type="float",
                           help="max longitude in decimal degrees", default=None)
         parser.add_option("--shape", dest="shape", action="store", type="string",
-                          help="Polygon file that defines the bounding box", default=None)
+                          help="Polygon file that defines the bounding box, any format supported by geopandas", default=None)
         parser.add_option("-o", "--orbit", dest="orbit", action="store", type="int",
                           help="Orbit Path number", default=None)
         parser.add_option("--json", dest="search_json_file", action="store", type="string",
@@ -314,7 +314,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
             if lat is None or lon is None:
                 if (latmin is None) or (lonmin is None) or (latmax is None) or (lonmax is None):
                     if (shape is None):
-                        raise SysError("provide at least a point or rectangle or tile number", -1)
+                        raise SysError("provide at least a point or rectangle or tile number or shape", -1)
                         # sys.exit(-1)
                     else:
                         lonmin, latmin, lonmax, latmax = gpd.read_file(shape).to_crs(4326).total_bounds
@@ -328,7 +328,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                     # sys.exit(-1)
 
         else:
-            if (latmin is None) and (lonmin is None) and (latmax is None) and (lonmax is None) and (lat is None) or (lon is None):
+            if (latmin is None) and (lonmin is None) and (latmax is None) and (lonmax is None) and (lat is None) or (lon is None) or (shape):
                 geom = 'location'
             else:
                 raise SysError("please choose location and coordinates, but not both", -1)
