@@ -317,7 +317,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                         raise SysError("provide at least a point or rectangle or tile number or shape", -1)
                         # sys.exit(-1)
                     elif 'geopandas' not in sys.modules:
-                        raise SysError('Package geopandas is needed to use argument "shape".')
+                        raise SysError('Package geopandas is needed to use argument "shape".', -1)
                     else:
                         lonmin, latmin, lonmax, latmax = gpd.read_file(shape).to_crs(4326).total_bounds
 
