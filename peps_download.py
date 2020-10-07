@@ -222,7 +222,7 @@ def parse_command_line():
         parser.add_option("--lonmax", dest="lonmax", action="store", type="float",
                           help="max longitude in decimal degrees", default=None)
         parser.add_option("--shape", dest="shape", action="store", type="string",
-                          help="Polygon file that defines the bounding box, any format supported by geopandas", default=None)
+                          help="Shape file that defines the bounding box, any format supported by geopandas", default=None)
         parser.add_option("-o", "--orbit", dest="orbit", action="store", type="int",
                           help="Orbit Path number", default=None)
         parser.add_option("--json", dest="search_json_file", action="store", type="string",
@@ -278,7 +278,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
     latmin,latmax,lonmin,lonmax: float
         bounding box of an area of interest
     shape: str
-        Polygon file used to define the extent
+        Shape file used to define the extent, any format supported by geopandas
     orbit: int
         Orbit Path number
     search_json_file: str
