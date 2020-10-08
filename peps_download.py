@@ -240,7 +240,7 @@ def parse_command_line():
 def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode="", no_download=True,
                   start_date=None, end_date=None, tile=None, location=None,
                   lat=None, lon=None, latmin=None, latmax=None, lonmin=None, lonmax=None,
-                  orbit=None, search_json_file=None, clouds=100, sat=None, extract=False,
+                  orbit=None, search_json_file=None, clouds=100, sat=None, extract=True,
                   max_trials=10, wait=1):
     """
     Download Sentinel S1, S2 or S3 products from PEPS sever
