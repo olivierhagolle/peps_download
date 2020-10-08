@@ -503,7 +503,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
             if (NbProdsToDownload > 0) and (n_trials < max_trials):
                 print("##############################################################################")
                 print("%d remaining products are on tape, lets's wait %d minutes before trying again" %
-                      NbProdsToDownload, wait)
+                      (NbProdsToDownload, wait))
                 print("##############################################################################")
                 time.sleep(wait*60)
 
