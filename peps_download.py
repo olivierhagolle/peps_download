@@ -508,7 +508,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                 time.sleep(wait*60)
 
 
-        return download_dict.keys()
+        return(prod, download_dict.keys())
 
 if __name__ == '__main__':
 
