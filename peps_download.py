@@ -419,7 +419,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
     os.system(search_catalog)
     time.sleep(5)
 
-    prod, download_dict, storage_dict, size_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat)
+    products, download_dict, storage_dict, size_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat)
 
     # ====================
     # Download
