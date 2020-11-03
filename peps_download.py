@@ -279,7 +279,9 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
     latmin,latmax,lonmin,lonmax: float
         bounding box of an area of interest
     shape: str | geopandas.geodataframe.GeoDataFrame | geopandas.geoseries.GeoSeries | shapely.geometry.polygon.Polygon | shapely.geometry.point.Point
-        Shape file or object used to define the extent. If file, any format supported by geopandas.
+        Shape file or object used to define the extent.
+        If file, any format supported by geopandas.
+        If shapely object coordinates are expected to be lon,lat (EPSG:4326)
     orbit: int
         Orbit Path number
     search_json_file: str
