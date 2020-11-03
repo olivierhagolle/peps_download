@@ -326,16 +326,18 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                             else:
                                 raise SysError('Shape file not found', -1)
 
+                        geom = 'rectangle'
+
                         if isinstance(shape, (gpd.geodataframe.GeoDataFrame, gpd.geoseries.GeoSeries)):
                             lonmin, latmin, lonmax, latmax =shape.to_crs(4326).total_bounds
                         elif isinstance(shape, shapely.geometry.polygon.Polygon):
                             lonmin, latmin, lonmax, latmax = shape.bounds
                         elif isinstance(shape, shapely.geometry.point.Point):
                             lon, lat = shape.bounds
+                            geom = 'point'
                         else:
                             raise SysError('Shape format not supported', -1)
 
-                geom = 'rectangle'
             else:
                 if (latmin is None) and (lonmin is None) and (latmax is None) and (lonmax is None) and (shape is None):
                     geom = 'point'
