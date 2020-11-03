@@ -8,6 +8,11 @@ This code relies on python 2.7 **(however, I just created a Python3 branch, whic
 
 Only the recent PEPS products or the frequently accessed ones are stored on disks (2 PB), while the rest is stored on tapes (up to 14 PB). Data stored on tapes have an access time increased by 2 to 6 mn. **From the 23rd of March, peps_download has been fully reshaped to first stage products on tapes for download, then download products on disk, which gives some time to upload the tape products on disks. This procedures considerably speeds the downloads up.**
  
+## Install
+
+```shell script
+pip install git+https://github.com/floriandeboissieu/peps_download.git@shapefile
+```
 
 ## Examples
 
