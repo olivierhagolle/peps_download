@@ -12,6 +12,7 @@ import platform as os_platform
 
 try:
     import geopandas as gpd
+    import shapely
 except:
     pass
 ###########################################################################
@@ -277,8 +278,8 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         latitude or longitude in decimal degrees
     latmin,latmax,lonmin,lonmax: float
         bounding box of an area of interest
-    shape: str | geopandas.geodataframe.GeoDataFrame | geopandas.geoseries.GeoSeries
-        Shape file or object used to define the extent, any format supported by geopandas
+    shape: str | geopandas.geodataframe.GeoDataFrame | geopandas.geoseries.GeoSeries | shapely.geometry.polygon.Polygon | shapely.geometry.point.Point
+        Shape file or object used to define the extent. If file, any format supported by geopandas.
     orbit: int
         Orbit Path number
     search_json_file: str
@@ -327,6 +328,10 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
 
                         if isinstance(shape, (gpd.geodataframe.GeoDataFrame, gpd.geoseries.GeoSeries)):
                             lonmin, latmin, lonmax, latmax =shape.to_crs(4326).total_bounds
+                        elif isinstance(shape, shapely.geometry.polygon.Polygon):
+                            lonmin, latmin, lonmax, latmax = shape.bounds
+                        elif isinstance(shape, shapely.geometry.point.Point):
+                            lon, lat = shape.bounds
                         else:
                             raise SysError('Shape format not supported', -1)
 
