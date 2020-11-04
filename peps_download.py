@@ -248,7 +248,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                   start_date=None, end_date=None, tile=None, location=None,
                   lat=None, lon=None, latmin=None, latmax=None, lonmin=None, lonmax=None, shape=None,
                   orbit=None, search_json_file=None, clouds=100, sat=None, extract=True,
-                  max_trials=10, wait=1):
+                  max_trials=10, wait=1, max_records=500):
     """
     Download Sentinel S1, S2 or S3 products from PEPS sever
 
@@ -296,6 +296,8 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         Maximum number of trials before it stops although files are still not downloaded (on tape or staging)
     wait: int
         Number of minutes to wait between trials.
+    max_records: int
+        Maximum number of products of request result
 
     Returns
     -------
@@ -424,11 +426,11 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
     # search in catalog
     # ====================
     if (product_type == "") and (sensor_mode == ""):
-        search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500' % (
-            search_json_file, collection, query_geom, start_date, end_date)
+        search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=%d' % (
+            search_json_file, collection, query_geom, start_date, end_date, max_records)
     else:
-        search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
-            search_json_file, collection, query_geom, start_date, end_date, product_type, sensor_mode)
+        search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=%d\&productType=%s\&sensorMode=%s' % (
+            search_json_file, collection, query_geom, start_date, end_date, max_records, product_type, sensor_mode)
 
     if os_platform.system() == 'Windows':
         search_catalog = search_catalog.replace('\&', '^&')
@@ -474,11 +476,11 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         while ((NbProdsToDownload > 0) and (n_trials < max_trials)):
             # redo catalog search to update disk/tape status
             if (product_type == "") and (sensor_mode == ""):
-                search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500' % (
-                    search_json_file, collection, query_geom, start_date, end_date)
+                search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=%d' % (
+                    search_json_file, collection, query_geom, start_date, end_date, max_records)
             else:
-                search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
-                    search_json_file, collection, query_geom, start_date, end_date, product_type, sensor_mode)
+                search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=%d\&productType=%s\&sensorMode=%s' % (
+                    search_json_file, collection, query_geom, start_date, end_date, max_records, product_type, sensor_mode)
 
             if os_platform.system() == 'Windows':
                 search_catalog = search_catalog.replace('\&', '^&')
