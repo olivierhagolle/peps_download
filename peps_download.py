@@ -552,6 +552,8 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                     search_catalog = search_catalog.replace('\&', '^&')
 
                 print(search_catalog)
+                if os.path.exists(search_json_file):
+                    os.remove(search_json_file)
                 os.system(search_catalog)
                 time.sleep(5)
 
