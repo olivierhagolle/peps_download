@@ -489,36 +489,6 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
     print("##########################")
     n_trials = 0
     while ((NbProdsToDownload > 0) and (n_trials < max_trials)):
-        # redo catalog search to update disk/tape status
-        page = 0
-        download_dict = {}
-        storage_dict = {}
-        size_dict = {}
-        page_len = 500
-        while page_len == 500:
-            page += 1
-            print('Page {}:'.format(str(page)))
-            if (product_type == "") and (sensor_mode == ""):
-                search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&page=%d' % (
-                    search_json_file, collection, query_geom, start_date, end_date, page)
-            else:
-                search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s\&page=%d' % (
-                    search_json_file, collection, query_geom, start_date, end_date, product_type, sensor_mode, page)
-
-            if os_platform.system() == 'Windows':
-                search_catalog = search_catalog.replace('\&', '^&')
-
-            print(search_catalog)
-            os.system(search_catalog)
-            time.sleep(5)
-
-            dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat)
-            download_dict.update(dl_dict)
-            storage_dict.update(st_dict)
-            size_dict.update(si_dict)
-            page_len = len(dl_dict)
-
-        products = list(download_dict.keys())
         NbProdsToDownload = 0
         # download all products on disk
         for prod in products:
@@ -551,7 +521,36 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                   (NbProdsToDownload, wait))
             print("##############################################################################")
             time.sleep(wait*60)
+            # redo catalog search to update disk/tape status
+            page = 0
+            download_dict = {}
+            storage_dict = {}
+            size_dict = {}
+            page_len = 500
+            while page_len == 500:
+                page += 1
+                print('Page {}:'.format(str(page)))
+                if (product_type == "") and (sensor_mode == ""):
+                    search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&page=%d' % (
+                        search_json_file, collection, query_geom, start_date, end_date, page)
+                else:
+                    search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s\&page=%d' % (
+                        search_json_file, collection, query_geom, start_date, end_date, product_type, sensor_mode, page)
 
+                if os_platform.system() == 'Windows':
+                    search_catalog = search_catalog.replace('\&', '^&')
+
+                print(search_catalog)
+                os.system(search_catalog)
+                time.sleep(5)
+
+                dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat)
+                download_dict.update(dl_dict)
+                storage_dict.update(st_dict)
+                size_dict.update(si_dict)
+                page_len = len(dl_dict)
+
+            products = list(download_dict.keys())
 
     return products
 
