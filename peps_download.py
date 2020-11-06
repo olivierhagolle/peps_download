@@ -447,7 +447,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat)
         download_dict.update(dl_dict)
         storage_dict.update(st_dict)
-        size_dict.update(size_dict)
+        size_dict.update(si_dict)
         page_len = len(dl_dict)
 
     products=list(download_dict.keys())
@@ -460,7 +460,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
 
     if len(download_dict) == 0:
         print("No product matches the criteria")
-        return ([], [])
+        return []
 
     if no_download:
         return products
@@ -515,7 +515,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
             dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat)
             download_dict.update(dl_dict)
             storage_dict.update(st_dict)
-            size_dict.update(size_dict)
+            size_dict.update(si_dict)
             page_len = len(dl_dict)
 
         products = list(download_dict.keys())
@@ -553,7 +553,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
             time.sleep(wait*60)
 
 
-    return products, download_dict.keys()
+    return products
 
 if __name__ == '__main__':
 
