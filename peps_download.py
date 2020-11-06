@@ -469,10 +469,13 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
     if write_dir == None:
         write_dir = os.getcwd()
 
+    NbProdsDownloaded = 0
     for prod in products:
         file_exists = os.path.exists(("%s/%s.SAFE") % (write_dir, prod)
                                      ) or os.path.exists(("%s/%s.zip") % (write_dir, prod))
-        if (not(no_download) and not(file_exists)):
+        if file_exists:
+            NbProdsDownloaded += 1
+        else:
             if storage_dict[prod] == "tape":
                 tmticks = time.time()
                 tmpfile = ("%s/tmp_%s.tmp") % (write_dir, tmticks)
@@ -483,12 +486,17 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                 if os.path.exists(tmpfile):
                     os.remove(tmpfile)
 
-    NbProdsToDownload = len(list(download_dict.keys()))
-    print("##########################")
-    print("%d  products to download" % NbProdsToDownload)
-    print("##########################")
+
+    NbProdsToDownload = len(list(download_dict)) - NbProdsDownloaded
+    print("###################################################")
+    print('%d products already downloaded' % NbProdsDownloaded)
+    print("%d remaining products to download" % NbProdsToDownload)
+    print("###################################################")
+
     n_trials = 0
     while ((NbProdsToDownload > 0) and (n_trials < max_trials)):
+
+        NbProdsDownloaded = 0
         NbProdsToDownload = 0
         # download all products on disk
         for prod in products:
@@ -508,8 +516,10 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                         NbProdsToDownload += 1
                     else:
                         check_rename(tmpfile, prod, size_dict[prod], write_dir, extract)
+                    NbProdsDownloaded += 1
             elif file_exists:
                 print("%s already exists" % prod)
+                NbProdsDownloaded += 1
             elif storage_dict[prod] == "tape" or storage_dict[prod] == "staging":
                     NbProdsToDownload += 1
 
@@ -517,6 +527,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         n_trials += 1
         if (NbProdsToDownload > 0) and (n_trials < max_trials):
             print("##############################################################################")
+            print('%d products already downloaded' % NbProdsDownloaded)
             print("%d remaining products are on tape, lets's wait %d minutes before trying again" %
                   (NbProdsToDownload, wait))
             print("##############################################################################")
