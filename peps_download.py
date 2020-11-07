@@ -243,6 +243,69 @@ def parse_command_line():
 
         return options, args
 
+def update_status(storage_dict, downloaded_prod, write_dir):
+    for prod in storage_dict.keys():
+        if os.path.exists(("%s/%s.SAFE") % (write_dir, prod)) or os.path.exists(("%s/%s.zip") % (write_dir, prod)):
+            storage_dict[prod] = 'existing'
+        elif storage_dict[prod] == 'tape':
+            storage_dict[prod] = 'on tape'
+        elif storage_dict[prod] == 'disk':
+            storage_dict[prod] = 'on disk'
+
+    for prod in downloaded_prod:
+        storage_dict[prod] = 'downloaded'
+    return storage_dict
+
+def statistics(storage_dict, message=True):
+    status = [v for k, v in storage_dict]
+    summary = {}
+    for s in set(status):
+        summary[s] = sum(status==s)
+    total_to_download = summary['on disk'] + summary['on tape'] + summary['staging']
+
+    if message:
+        print("###################################################")
+        print('Summary:')
+        for k, v in summary.items():
+            print('\t- %s: %d products' % (k, v))
+        print('Total to download: %d' % total_to_download)
+        print("###################################################")
+    return summary, total_to_download
+
+def search_query(search_json_file, collection, product_type, sensor_mode,
+                 start_date, end_date, query_geom, orbit, clouds, sat):
+
+    page=0
+    download_dict={}
+    storage_dict={}
+    size_dict={}
+    page_len=500
+    while page_len==500:
+        page+=1
+        print('Page {}:'.format(page))
+        if (product_type == "") and (sensor_mode == ""):
+            search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&page=%d' % (
+                search_json_file, collection, query_geom, start_date, end_date, page)
+        else:
+            search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s\&page=%d' % (
+                search_json_file, collection, query_geom, start_date, end_date, product_type, sensor_mode, page)
+
+        if os_platform.system() == 'Windows':
+            search_catalog = search_catalog.replace('\&', '^&')
+
+        print(search_catalog)
+        os.system(search_catalog)
+        time.sleep(5)
+
+        dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat)
+        download_dict.update(dl_dict)
+        storage_dict.update(st_dict)
+        size_dict.update(si_dict)
+        page_len = len(dl_dict)
+
+
+    return download_dict, storage_dict, size_dict
+
 
 def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode="", no_download=True,
                   start_date=None, end_date=None, tile=None, location=None,
@@ -418,65 +481,33 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
     if os.path.exists(search_json_file):
         os.remove(search_json_file)
 
-
     # ====================
     # search in catalog
     # ====================
-    page=0
-    download_dict={}
-    storage_dict={}
-    size_dict={}
-    page_len=500
-    while page_len==500:
-        page+=1
-        print('Page {}:'.format(str(page)))
-        if (product_type == "") and (sensor_mode == ""):
-            search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&page=%d' % (
-                search_json_file, collection, query_geom, start_date, end_date, page)
-        else:
-            search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s\&page=%d' % (
-                search_json_file, collection, query_geom, start_date, end_date, product_type, sensor_mode, page)
-
-        if os_platform.system() == 'Windows':
-            search_catalog = search_catalog.replace('\&', '^&')
-
-        print(search_catalog)
-        os.system(search_catalog)
-        time.sleep(5)
-
-        dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat)
-        download_dict.update(dl_dict)
-        storage_dict.update(st_dict)
-        size_dict.update(si_dict)
-        page_len = len(dl_dict)
-
-    products=list(download_dict.keys())
-
+    downloaded_prod = []
+    download_dict, storage_dict, size_dict = search_query(search_json_file, collection, product_type,
+                                                                    sensor_mode, start_date, end_date,
+                                                                    query_geom, orbit, clouds, sat)
+    products = list(download_dict.keys())
+    storage_dict = update_status(storage_dict, downloaded_prod, write_dir)
 
     # ====================
     # Download
     # ====================
 
-
     if len(download_dict) == 0:
         print("No product matches the criteria")
-        return []
+        return ([], {})
 
-    if no_download:
-        return products
+    summary, total_to_download = statistics(storage_dict, message=True)
 
-    # first try for the products on tape
-    if write_dir == None:
-        write_dir = os.getcwd()
+    if not no_download:
+        # first try for the products on tape
+        if write_dir == None:
+            write_dir = os.getcwd()
 
-    NbProdsDownloaded = 0
-    for prod in products:
-        file_exists = os.path.exists(("%s/%s.SAFE") % (write_dir, prod)
-                                     ) or os.path.exists(("%s/%s.zip") % (write_dir, prod))
-        if file_exists:
-            NbProdsDownloaded += 1
-        else:
-            if storage_dict[prod] == "tape":
+        for prod in products:
+            if storage_dict[prod] == "on tape":
                 tmticks = time.time()
                 tmpfile = ("%s/tmp_%s.tmp") % (write_dir, tmticks)
                 print("\nStage tape product: %s" % prod)
@@ -487,26 +518,12 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                     os.remove(tmpfile)
 
 
-    NbProdsToDownload = len(list(download_dict)) - NbProdsDownloaded
-    print("###################################################")
-    print('%d products already downloaded' % NbProdsDownloaded)
-    print("%d remaining products to download" % NbProdsToDownload)
-    print("###################################################")
+        n_trials = 0
+        while ((total_to_download > 0) and (n_trials < max_trials)):
 
-    n_trials = 0
-    while ((NbProdsToDownload > 0) and (n_trials < max_trials)):
-
-        NbProdsDownloaded = 0
-        NbProdsToDownload = 0
-        # download all products on disk
-        for prod in products:
-            file_exists = os.path.exists(("%s/%s.SAFE") % (write_dir, prod)
-                                         ) or os.path.exists(("%s/%s.zip") % (write_dir, prod))
-            if file_exists:
-                print("%s already exists" % prod)
-                NbProdsDownloaded += 1
-            else:
-                if storage_dict[prod] == "disk":
+            # download all products on disk
+            for prod in products:
+                if storage_dict[prod] == 'on disk':
                     tmticks = time.time()
                     tmpfile = ("%s/tmp_%s.tmp") % (write_dir, tmticks)
                     print("\nDownload of product : %s" % prod)
@@ -515,58 +532,33 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                     print(get_product)
                     os.system(get_product)
                     # check binary product, rename tmp file
-                    if not os.path.exists(("%s/tmp_%s.tmp") % (write_dir, tmticks)):
-                        NbProdsToDownload += 1
-                    else:
+                    if os.path.exists(("%s/tmp_%s.tmp") % (write_dir, tmticks)):
                         check_rename(tmpfile, prod, size_dict[prod], write_dir, extract)
-                    NbProdsDownloaded += 1
+                        downloaded_prod.append(prod)
+                        storage_dict[prod] = 'downloaded'
 
-                elif storage_dict[prod] == "tape" or storage_dict[prod] == "staging":
-                    NbProdsToDownload += 1
 
-        # download all products on tape
-        n_trials += 1
-        if (NbProdsToDownload > 0) and (n_trials < max_trials):
-            print("##############################################################################")
-            print('%d products already downloaded' % NbProdsDownloaded)
-            print("%d remaining products are on tape, lets's wait %d minutes before trying again" %
-                  (NbProdsToDownload, wait))
-            print("##############################################################################")
-            time.sleep(wait*60)
-            # redo catalog search to update disk/tape status
-            page = 0
-            download_dict = {}
-            storage_dict = {}
-            size_dict = {}
-            page_len = 500
-            while page_len == 500:
-                page += 1
-                print('Page {}:'.format(str(page)))
-                if (product_type == "") and (sensor_mode == ""):
-                    search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&page=%d' % (
-                        search_json_file, collection, query_geom, start_date, end_date, page)
-                else:
-                    search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s\&page=%d' % (
-                        search_json_file, collection, query_geom, start_date, end_date, product_type, sensor_mode, page)
+            # download all products on tape
+            summary, total_to_download = statistics(storage_dict, message=True)
 
-                if os_platform.system() == 'Windows':
-                    search_catalog = search_catalog.replace('\&', '^&')
+            n_trials += 1
+            if (total_to_download > 0) and (n_trials < max_trials):
 
-                print(search_catalog)
-                if os.path.exists(search_json_file):
-                    os.remove(search_json_file)
-                os.system(search_catalog)
-                time.sleep(5)
+                print("##############################################################################")
+                print("%d remaining products to download, lets's wait %d minutes before trying again" %
+                      (total_to_download, wait))
+                print("##############################################################################")
+                time.sleep(wait*60)
+                # redo catalog search to update disk/tape status
+                download_dict, storage_dict, size_dict = search_query(search_json_file, collection,
+                                                                                product_type,
+                                                                                sensor_mode, start_date, end_date,
+                                                                                query_geom, orbit, clouds, sat)
+                products = list(download_dict.keys())
+                storage_dict = update_status(storage_dict, downloaded_prod, write_dir)
+                summary, total_to_download = statistics(storage_dict, message=True)
 
-                dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat)
-                download_dict.update(dl_dict)
-                storage_dict.update(st_dict)
-                size_dict.update(si_dict)
-                page_len = len(dl_dict)
-
-            products = list(download_dict.keys())
-
-    return products
+    return products, storage_dict
 
 if __name__ == '__main__':
 
