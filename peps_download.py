@@ -259,7 +259,7 @@ def update_status(status_dict, downloaded_prod, write_dir):
 def statistics(status_dict, message=True):
     status = [v for k, v in status_dict.items()]
     summary = {}
-    for s in set(status):
+    for s in list(set(status)):
         summary[s] = sum(status==s)
     total_to_download = summary['on disk'] + summary['on tape'] + summary['staging']
 
