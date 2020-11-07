@@ -362,8 +362,8 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
 
     Returns
     -------
-    list
-        Product names
+    dict
+        {product name: status}
     """
 
     if search_json_file is None or search_json_file == "":
