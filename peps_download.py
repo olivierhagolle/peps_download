@@ -91,7 +91,7 @@ def parse_catalog(search_json_file, orbit, collection, clouds, sat):
 
     # Sort data
     download_dict = {}
-    storage_dict = {}
+    status_dict = {}
     size_dict = {}
     if len(data["features"]) > 0:
         for i in range(len(data["features"])):
@@ -120,17 +120,17 @@ def parse_catalog(search_json_file, orbit, collection, clouds, sat):
                         if platform.startswith('S2'):
                             if prod.find("_R%03d" % orbit) > 0:
                                 download_dict[prod] = feature_id
-                                storage_dict[prod] = storage
+                                status_dict[prod] = storage
                                 size_dict[prod] = resourceSize
 
                         elif platform.startswith('S1'):
                             if relativeOrbit == orbit:
                                 download_dict[prod] = feature_id
-                                storage_dict[prod] = storage
+                                status_dict[prod] = storage
                                 size_dict[prod] = resourceSize
                     else:
                         download_dict[prod] = feature_id
-                        storage_dict[prod] = storage
+                        status_dict[prod] = storage
                         size_dict[prod] = resourceSize
 
             except:
@@ -141,7 +141,7 @@ def parse_catalog(search_json_file, orbit, collection, clouds, sat):
             for i in range(len(data["features"])):
                 prod = data["features"][i]["properties"]["productIdentifier"]
                 if data["features"][i]["properties"]["cloudCover"] > clouds:
-                    del download_dict[prod], storage_dict[prod], size_dict[prod]
+                    del download_dict[prod], status_dict[prod], size_dict[prod]
 
         # selecion of specific satellite
         if sat != None:
@@ -149,19 +149,19 @@ def parse_catalog(search_json_file, orbit, collection, clouds, sat):
                 prod = data["features"][i]["properties"]["productIdentifier"]
                 if data["features"][i]["properties"]["platform"] != sat:
                     try:
-                        del download_dict[prod], storage_dict[prod], size_dict[prod]
+                        del download_dict[prod], status_dict[prod], size_dict[prod]
                     except KeyError:
                         pass
 
         for prod in download_dict.keys():
-            print(prod, storage_dict[prod])
+            print(prod, status_dict[prod])
     else:
         print(">>> no product corresponds to selection criteria")
         # sys.exit(-1)
         return {}, {}, {}, {}
 #    print(download_dict.keys())
 
-    return(download_dict, storage_dict, size_dict)
+    return(download_dict, status_dict, size_dict)
 
 
 # ===================== MAIN
@@ -243,21 +243,21 @@ def parse_command_line():
 
         return options, args
 
-def update_status(storage_dict, downloaded_prod, write_dir):
-    for prod in storage_dict.keys():
+def update_status(status_dict, downloaded_prod, write_dir):
+    for prod in status_dict.keys():
         if os.path.exists(("%s/%s.SAFE") % (write_dir, prod)) or os.path.exists(("%s/%s.zip") % (write_dir, prod)):
-            storage_dict[prod] = 'existing'
-        elif storage_dict[prod] == 'tape':
-            storage_dict[prod] = 'on tape'
-        elif storage_dict[prod] == 'disk':
-            storage_dict[prod] = 'on disk'
+            status_dict[prod] = 'existing'
+        elif status_dict[prod] == 'tape':
+            status_dict[prod] = 'on tape'
+        elif status_dict[prod] == 'disk':
+            status_dict[prod] = 'on disk'
 
     for prod in downloaded_prod:
-        storage_dict[prod] = 'downloaded'
-    return storage_dict
+        status_dict[prod] = 'downloaded'
+    return status_dict
 
-def statistics(storage_dict, message=True):
-    status = [v for k, v in storage_dict]
+def statistics(status_dict, message=True):
+    status = [v for k, v in status_dict]
     summary = {}
     for s in set(status):
         summary[s] = sum(status==s)
@@ -277,7 +277,7 @@ def search_query(search_json_file, collection, product_type, sensor_mode,
 
     page=0
     download_dict={}
-    storage_dict={}
+    status_dict={}
     size_dict={}
     page_len=500
     while page_len==500:
@@ -299,12 +299,12 @@ def search_query(search_json_file, collection, product_type, sensor_mode,
 
         dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat)
         download_dict.update(dl_dict)
-        storage_dict.update(st_dict)
+        status_dict.update(st_dict)
         size_dict.update(si_dict)
         page_len = len(dl_dict)
 
 
-    return download_dict, storage_dict, size_dict
+    return download_dict, status_dict, size_dict
 
 
 def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode="", no_download=True,
@@ -485,11 +485,11 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
     # search in catalog
     # ====================
     downloaded_prod = []
-    download_dict, storage_dict, size_dict = search_query(search_json_file, collection, product_type,
+    download_dict, status_dict, size_dict = search_query(search_json_file, collection, product_type,
                                                                     sensor_mode, start_date, end_date,
                                                                     query_geom, orbit, clouds, sat)
     products = list(download_dict.keys())
-    storage_dict = update_status(storage_dict, downloaded_prod, write_dir)
+    status_dict = update_status(status_dict, downloaded_prod, write_dir)
 
     # ====================
     # Download
@@ -497,9 +497,9 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
 
     if len(download_dict) == 0:
         print("No product matches the criteria")
-        return ([], {})
+        return []
 
-    summary, total_to_download = statistics(storage_dict, message=True)
+    summary, total_to_download = statistics(status_dict, message=True)
 
     if not no_download:
         # first try for the products on tape
@@ -507,7 +507,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
             write_dir = os.getcwd()
 
         for prod in products:
-            if storage_dict[prod] == "on tape":
+            if status_dict[prod] == "on tape":
                 tmticks = time.time()
                 tmpfile = ("%s/tmp_%s.tmp") % (write_dir, tmticks)
                 print("\nStage tape product: %s" % prod)
@@ -523,7 +523,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
 
             # download all products on disk
             for prod in products:
-                if storage_dict[prod] == 'on disk':
+                if status_dict[prod] == 'on disk':
                     tmticks = time.time()
                     tmpfile = ("%s/tmp_%s.tmp") % (write_dir, tmticks)
                     print("\nDownload of product : %s" % prod)
@@ -535,11 +535,11 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                     if os.path.exists(("%s/tmp_%s.tmp") % (write_dir, tmticks)):
                         check_rename(tmpfile, prod, size_dict[prod], write_dir, extract)
                         downloaded_prod.append(prod)
-                        storage_dict[prod] = 'downloaded'
+                        status_dict[prod] = 'downloaded'
 
 
             # download all products on tape
-            summary, total_to_download = statistics(storage_dict, message=True)
+            summary, total_to_download = statistics(status_dict, message=True)
 
             n_trials += 1
             if (total_to_download > 0) and (n_trials < max_trials):
@@ -550,15 +550,15 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                 print("##############################################################################")
                 time.sleep(wait*60)
                 # redo catalog search to update disk/tape status
-                download_dict, storage_dict, size_dict = search_query(search_json_file, collection,
+                download_dict, status_dict, size_dict = search_query(search_json_file, collection,
                                                                                 product_type,
                                                                                 sensor_mode, start_date, end_date,
                                                                                 query_geom, orbit, clouds, sat)
                 products = list(download_dict.keys())
-                storage_dict = update_status(storage_dict, downloaded_prod, write_dir)
-                summary, total_to_download = statistics(storage_dict, message=True)
+                status_dict = update_status(status_dict, downloaded_prod, write_dir)
+                summary, total_to_download = statistics(status_dict, message=True)
 
-    return products, storage_dict
+    return status_dict
 
 if __name__ == '__main__':
 
