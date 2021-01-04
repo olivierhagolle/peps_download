@@ -9,6 +9,7 @@ import sys
 import zipfile
 from datetime import date
 import platform as os_platform
+import subprocess
 
 try:
     import geopandas as gpd
@@ -79,6 +80,11 @@ class SysError(Exception):
         super().__init__(message)
     def __repr__(self):
         self.message
+
+def run_curl(x, verbose=True):
+    if not verbose:
+        x = x+' -s -S'
+    subprocess.check_call(x, shell=True)
 
 def parse_catalog(search_json_file, orbit, collection, clouds, sat, verbose=True):
     # Filter catalog result
@@ -297,7 +303,8 @@ def search_query(search_json_file, collection, product_type, sensor_mode,
             search_catalog = search_catalog.replace('\&', '^&')
         if verbose:
             print(search_catalog)
-        os.system(search_catalog)
+        run_curl(search_catalog, verbose)
+
         time.sleep(5)
 
         dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat, verbose=verbose)
@@ -520,9 +527,9 @@ def peps_download(write_dir, auth="", collection='S2', product_type="", sensor_m
                 tmpfile = ("%s/tmp_%s.tmp") % (write_dir, tmticks)
                 if verbose:
                     print("\nStage tape product: %s" % prod)
-                get_product = 'curl -o %s -k -u "%s:%s" https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps &>/dev/null' % (
+                get_product = 'curl -o %s -k -u "%s:%s" https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps' % (
                     tmpfile, email, passwd, collection, download_dict[prod])
-                os.system(get_product)
+                run_curl(get_product, verbose=False)
                 if os.path.exists(tmpfile):
                     os.remove(tmpfile)
 
@@ -541,7 +548,7 @@ def peps_download(write_dir, auth="", collection='S2', product_type="", sensor_m
                         tmpfile, email, passwd, collection, download_dict[prod])
                     if verbose:
                         print(get_product)
-                    os.system(get_product)
+                    run_curl(get_product, verbose)
                     # check binary product, rename tmp file
                     if os.path.exists(("%s/tmp_%s.tmp") % (write_dir, tmticks)):
                         check_rename(tmpfile, prod, size_dict[prod], write_dir, extract)
