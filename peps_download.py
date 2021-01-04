@@ -80,7 +80,7 @@ class SysError(Exception):
     def __repr__(self):
         self.message
 
-def parse_catalog(search_json_file, orbit, collection, clouds, sat):
+def parse_catalog(search_json_file, orbit, collection, clouds, sat, verbose=True):
     # Filter catalog result
     with open(search_json_file) as data_file:
         data = json.load(data_file)
@@ -152,9 +152,9 @@ def parse_catalog(search_json_file, orbit, collection, clouds, sat):
                         del download_dict[prod], status_dict[prod], size_dict[prod]
                     except KeyError:
                         pass
-
-        for prod in download_dict.keys():
-            print(prod, status_dict[prod])
+        if verbose:
+            for prod in download_dict.keys():
+                print(prod, status_dict[prod])
     else:
         print(">>> no product corresponds to selection criteria")
         # sys.exit(-1)
@@ -275,7 +275,7 @@ def statistics(status_dict, message=True):
     return summary, total_to_download
 
 def search_query(search_json_file, collection, product_type, sensor_mode,
-                 start_date, end_date, query_geom, orbit, clouds, sat):
+                 start_date, end_date, query_geom, orbit, clouds, sat, verbose=True):
 
     page=0
     download_dict={}
@@ -284,7 +284,8 @@ def search_query(search_json_file, collection, product_type, sensor_mode,
     page_len=500
     while page_len==500:
         page+=1
-        print('Page {}:'.format(page))
+        if verbose:
+            print('Page {}:'.format(page))
         if (product_type == "") and (sensor_mode == ""):
             search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&page=%d' % (
                 search_json_file, collection, query_geom, start_date, end_date, page)
@@ -294,12 +295,12 @@ def search_query(search_json_file, collection, product_type, sensor_mode,
 
         if os_platform.system() == 'Windows':
             search_catalog = search_catalog.replace('\&', '^&')
-
-        print(search_catalog)
+        if verbose:
+            print(search_catalog)
         os.system(search_catalog)
         time.sleep(5)
 
-        dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat)
+        dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat, verbose=verbose)
         download_dict.update(dl_dict)
         status_dict.update(st_dict)
         size_dict.update(si_dict)
@@ -491,8 +492,8 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
     # ====================
     downloaded_prod = []
     download_dict, status_dict, size_dict = search_query(search_json_file, collection, product_type,
-                                                                    sensor_mode, start_date, end_date,
-                                                                    query_geom, orbit, clouds, sat)
+                                                         sensor_mode, start_date, end_date,
+                                                         query_geom, orbit, clouds, sat, verbose=verbose)
     products = list(download_dict.keys())
     status_dict = update_status(status_dict, downloaded_prod, write_dir)
 
@@ -559,9 +560,8 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                 time.sleep(wait*60)
                 # redo catalog search to update disk/tape status
                 download_dict, status_dict, size_dict = search_query(search_json_file, collection,
-                                                                                product_type,
-                                                                                sensor_mode, start_date, end_date,
-                                                                                query_geom, orbit, clouds, sat)
+                                                                     product_type,sensor_mode, start_date, end_date,
+                                                                     query_geom, orbit, clouds, sat, verbose=verbose)
                 products = list(download_dict.keys())
                 status_dict = update_status(status_dict, downloaded_prod, write_dir)
                 summary, total_to_download = statistics(status_dict, message=True)
