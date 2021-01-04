@@ -313,7 +313,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                   start_date=None, end_date=None, tile=None, location=None,
                   lat=None, lon=None, latmin=None, latmax=None, lonmin=None, lonmax=None, shape=None,
                   orbit=None, search_json_file=None, clouds=100, sat=None, extract=True,
-                  max_trials=10, wait=1):
+                  max_trials=10, wait=1, verbose=True):
     """
     Download Sentinel S1, S2 or S3 products from PEPS sever
 
@@ -512,7 +512,8 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
             if status_dict[prod] == "on tape":
                 tmticks = time.time()
                 tmpfile = ("%s/tmp_%s.tmp") % (write_dir, tmticks)
-                print("\nStage tape product: %s" % prod)
+                if verbose:
+                    print("\nStage tape product: %s" % prod)
                 get_product = 'curl -o %s -k -u "%s:%s" https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps &>/dev/null' % (
                     tmpfile, email, passwd, collection, download_dict[prod])
                 os.system(get_product)
@@ -528,10 +529,12 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                 if status_dict[prod] == 'on disk':
                     tmticks = time.time()
                     tmpfile = ("%s/tmp_%s.tmp") % (write_dir, tmticks)
-                    print("\nDownload of product : %s" % prod)
+                    if verbose:
+                        print("\nDownload of product : %s" % prod)
                     get_product = 'curl -o %s -k -u "%s:%s" https://peps.cnes.fr/resto/collections/%s/%s/download/?issuerId=peps' % (
                         tmpfile, email, passwd, collection, download_dict[prod])
-                    print(get_product)
+                    if verbose:
+                        print(get_product)
                     os.system(get_product)
                     # check binary product, rename tmp file
                     if os.path.exists(("%s/tmp_%s.tmp") % (write_dir, tmticks)):
