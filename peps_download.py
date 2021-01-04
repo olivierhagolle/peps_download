@@ -564,7 +564,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
                                                                      query_geom, orbit, clouds, sat, verbose=verbose)
                 products = list(download_dict.keys())
                 status_dict = update_status(status_dict, downloaded_prod, write_dir)
-                summary, total_to_download = statistics(status_dict, message=True)
+                summary, total_to_download = statistics(status_dict, message=verbose)
 
     return status_dict
 
