@@ -310,7 +310,7 @@ def search_query(search_json_file, collection, product_type, sensor_mode,
     return download_dict, status_dict, size_dict
 
 
-def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode="", no_download=True,
+def peps_download(write_dir, auth="", collection='S2', product_type="", sensor_mode="", no_download=True,
                   start_date=None, end_date=None, tile=None, location=None,
                   lat=None, lon=None, latmin=None, latmax=None, lonmin=None, lonmax=None, shape=None,
                   orbit=None, search_json_file=None, clouds=100, sat=None, extract=True,
@@ -323,7 +323,8 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
     write_dir: str
         Download directory
     auth: str
-        Authentication file with Peps account and password
+        Authentication file with Peps account and password, see example in peps.txt.
+        Not necessary if no_download=True.
     collection: str
         Collection within theia collections: 'S1', 'S2', 'S2ST', 'S3'
     product_type: str
@@ -471,18 +472,19 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
             print("**** products after that date will be downloaded")
 
     # ====================
-    # read authentification file
+    # read authentication file
     # ====================
-    try:
-        f = open(auth)
-        (email, passwd) = f.readline().split(' ')
-        if passwd.endswith('\n'):
-            passwd = passwd[:-1]
-        f.close()
-    except Exception as e:
-        print(e)
-        SysError("error with authentication file", -2)
-        # sys.exit(-2)
+    if not no_download:  # auth not necessary for search query
+        try:
+            f = open(auth)
+            (email, passwd) = f.readline().split(' ')
+            if passwd.endswith('\n'):
+                passwd = passwd[:-1]
+            f.close()
+        except Exception as e:
+            print(e)
+            SysError("error with authentication file", -2)
+            # sys.exit(-2)
 
     if os.path.exists(search_json_file):
         os.remove(search_json_file)
