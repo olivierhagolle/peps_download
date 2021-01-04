@@ -505,7 +505,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         print("No product matches the criteria")
         return []
 
-    summary, total_to_download = statistics(status_dict, message=True)
+    summary, total_to_download = statistics(status_dict, message=verbose)
 
     if not no_download:
         # first try for the products on tape
@@ -548,7 +548,7 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
 
 
             # download all products on tape
-            summary, total_to_download = statistics(status_dict, message=True)
+            summary, total_to_download = statistics(status_dict, message=verbose)
 
             n_trials += 1
             if (total_to_download > 0) and (n_trials < max_trials):
