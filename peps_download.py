@@ -343,10 +343,11 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
         latitude or longitude in decimal degrees
     latmin,latmax,lonmin,lonmax: float
         bounding box of an area of interest
-    shape: str | geopandas.geodataframe.GeoDataFrame | geopandas.geoseries.GeoSeries | shapely.geometry.polygon.Polygon | shapely.geometry.point.Point
-        Shape file or object used to define the extent.
+    shape: str | geopandas.geodataframe.GeoDataFrame | geopandas.geoseries.GeoSeries | shapely.geometry.base.BaseGeometry
+        Shape file or object used to define the bounding box of interest.
         If file, any format supported by geopandas.
-        If shapely object coordinates are expected to be lon,lat (EPSG:4326)
+        If file or geopandas object, it is automatically reprojected to EPSG:4326.
+        Shapely geometric object of any type is also supported. For shapely geometric object, coordinates are expected to be in lon,lat (EPSG:4326).
     orbit: int
         Orbit Path number
     search_json_file: str
@@ -397,13 +398,15 @@ def peps_download(write_dir, auth, collection='S2', product_type="", sensor_mode
 
                         if isinstance(shape, (gpd.geodataframe.GeoDataFrame, gpd.geoseries.GeoSeries)):
                             lonmin, latmin, lonmax, latmax =shape.to_crs(4326).total_bounds
-                        elif isinstance(shape, shapely.geometry.polygon.Polygon):
+                        elif isinstance(shape, shapely.geometry.base.BaseGeometry):
                             lonmin, latmin, lonmax, latmax = shape.bounds
-                        elif isinstance(shape, shapely.geometry.point.Point):
-                            lon, lat = shape.bounds
-                            geom = 'point'
                         else:
                             raise SysError('Shape format not supported', -1)
+
+                        # check if point geometry
+                        if (lonmin == lonmax) and (latmin == latmax):
+                            lon, lat = lonmin, latmin
+                            geom = 'point'
 
             else:
                 if (latmin is None) and (lonmin is None) and (latmax is None) and (lonmax is None) and (shape is None):
