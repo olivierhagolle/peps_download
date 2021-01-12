@@ -164,7 +164,7 @@ def parse_catalog(search_json_file, orbit, collection, clouds, sat, verbose=True
     else:
         print(">>> no product corresponds to selection criteria")
         # sys.exit(-1)
-        return {}, {}, {}, {}
+        return {}, {}, {}
 #    print(download_dict.keys())
 
     return(download_dict, status_dict, size_dict)
