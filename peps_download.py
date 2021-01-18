@@ -305,7 +305,7 @@ def search_query(search_json_file, collection, product_type, sensor_mode,
             print(search_catalog)
         run_curl(search_catalog, verbose)
 
-        time.sleep(5)
+        # time.sleep(1)
 
         dl_dict, st_dict, si_dict = parse_catalog(search_json_file, orbit, collection, clouds, sat, verbose=verbose)
         download_dict.update(dl_dict)
