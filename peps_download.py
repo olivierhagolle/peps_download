@@ -181,14 +181,13 @@ def parse_command_line():
         print('      ' + sys.argv[0] + ' [options]')
         print("     Aide : ", prog, " --help")
         print("        ou : ", prog, " -h")
-        print("example 1 : python %s -l 'Toulouse' -a peps.txt -d 2016-12-06 -f 2017-02-01 -c S2ST" %
+        print("example 1 : python %s -l 'Toulouse' -a peps.txt -d 2016-12-06 -f 2017-02-01 -c S2" %
               sys.argv[0])
         print("example 2 : python %s --lon 1 --lat 44 -a peps.txt -d 2015-11-01 -f 2015-12-01 -c S2" %
               sys.argv[0])
         print("example 3 : python %s --lonmin 1 --lonmax 2 --latmin 43 --latmax 44 -a peps.txt -d 2015-11-01 -f 2015-12-01 -c S2" %
               sys.argv[0])
-        print("example 4 : python %s -l 'Toulouse' -a peps.txt -c SpotWorldHeritage -p SPOT4 -d 2005-11-01 -f 2006-12-01" %
-              sys.argv[0])
+
         print("example 5 : python %s -c S1 -p GRD -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01" %
               sys.argv[0])
         sys.exit(-1)
@@ -200,6 +199,7 @@ def parse_command_line():
                           help="Peps account and password file")
         parser.add_option("-w", "--write_dir", dest="write_dir", action="store", type="string",
                           help="Path where the products should be downloaded", default='.')
+        # S2ST kept for retrocompatibility (see commit bb66f9e, 2020-12-20)
         parser.add_option("-c", "--collection", dest="collection", action="store", type="choice",
                           help="Collection within theia collections", choices=['S1', 'S2', 'S2ST', 'S3'], default='S2')
         parser.add_option("-p", "--product_type", dest="product_type", action="store", type="string",
@@ -333,7 +333,7 @@ def peps_download(write_dir, auth="", collection='S2', product_type="", sensor_m
         Authentication file with Peps account and password, see example in peps.txt.
         Not necessary if no_download=True.
     collection: str
-        Collection within theia collections: 'S1', 'S2', 'S2ST', 'S3'
+        Collection within theia collections: 'S1', 'S2', 'S3'
     product_type: str
         GRD, SLC, OCN (for S1) | S2MSI1C S2MSI2A S2MSI2Ap (for S2)
     sensor_mode:
@@ -460,23 +460,10 @@ def peps_download(write_dir, auth="", collection='S2', product_type="", sensor_m
 
     # special case for Sentinel-2
 
+    # All tiles available in S2ST (see commit bb66f9e, 2020-12-20)
+    # for retrocompatibility
     if collection == 'S2':
-        if start_date >= '2016-12-05':
-            print("**** products after '2016-12-05' are stored in Tiled products collection")
-            print("**** please use option -c S2ST")
-        elif end_date >= '2016-12-05':
-            print("**** products after '2016-12-05' are stored in Tiled products collection")
-            print("**** please use option -c S2ST to get the products after that date")
-            print("**** products before that date will be downloaded")
-
-    if collection == 'S2ST':
-        if end_date < '2016-12-05':
-            print("**** products before '2016-12-05' are stored in non-tiled products collection")
-            print("**** please use option -c S2")
-        elif start_date < '2016-12-05':
-            print("**** products before '2016-12-05' are stored in non-tiled products collection")
-            print("**** please use option -c S2 to get the products before that date")
-            print("**** products after that date will be downloaded")
+        collection = 'S2ST'
 
     # ====================
     # read authentication file
