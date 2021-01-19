@@ -187,8 +187,7 @@ def parse_command_line():
               sys.argv[0])
         print("example 3 : python %s --lonmin 1 --lonmax 2 --latmin 43 --latmax 44 -a peps.txt -d 2015-11-01 -f 2015-12-01 -c S2" %
               sys.argv[0])
-
-        print("example 5 : python %s -c S1 -p GRD -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01" %
+        print("example 4 : python %s -c S1 -p GRD -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01" %
               sys.argv[0])
         sys.exit(-1)
     else:
