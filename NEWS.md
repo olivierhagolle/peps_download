@@ -8,7 +8,6 @@
 - control of verbosity
 - NEWS.md for future updates
 
-
 # Change
 
 - return file status ('on tape', 'staging', 'on disk', 'downloaded', 'existing')
