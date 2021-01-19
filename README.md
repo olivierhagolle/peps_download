@@ -24,21 +24,21 @@ pip install git+https://github.com/floriandeboissieu/peps_download.git@shapefile
 This software is still quite basic, but if you have an account at PEPS, you may download products using command lines like 
 
 
-- `python ./peps_download.py  -c S2ST -l 'Toulouse' -a peps.txt -d 2017-01-01 -f 2017-02-01`
-- `python ./peps_download.py  -c S2ST -t 31TCJ -a peps.txt -d 2017-01-01 -f 2017-02-01`
+- `peps_download.py  -c S2ST -l 'Toulouse' -a peps.txt -d 2017-01-01 -f 2017-02-01`
+- `peps_download.py  -c S2ST -t 31TCJ -a peps.txt -d 2017-01-01 -f 2017-02-01`
 
  which downloads the *Sentinel-2 single tile* products  acquired in January 2017 above Toulouse (you may also specify the tile number as in the second example).
  When you provide a date YY-MM-DD, it is actually YY-MM-DD:00;00:00. So a request with `-d 2015-11-01 -f 2015-11-01` will yield no result, while `-d 2015-11-01 -f 2015-11-02` will yield data acquired on 2015-11-01 (provided they exist).
  
- - `python ./peps_download.py  -c S2ST --lon 1 --lat 43.5 -a peps.txt -d 2015-11-01 -f 2015-12-01 -o 51` 
+ - `peps_download.py  -c S2ST --lon 1 --lat 43.5 -a peps.txt -d 2015-11-01 -f 2015-12-01 -o 51` 
 
  which downloads the Sentinel-2 products above --lon 1 --lat 43.5 (~Toulouse), acquired in November 2015 from orbit path number 51 only.
 ### for Sentinel-1
-- `python ./peps_download.py  -c S1 --lonmin 1 --lonmax 2 --latmin 43 --latmax 44 -a peps.txt -d 2015-11-01 -f 2015-12-01`
+- `peps_download.py  -c S1 --lonmin 1 --lonmax 2 --latmin 43 --latmax 44 -a peps.txt -d 2015-11-01 -f 2015-12-01`
 
  which downloads the Sentinel-1 products in latitude, longitude box around Toulouse, acquired in November 2015.
 
-- `python ./peps_download.py -c S1 -p GRD -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01`
+- `peps_download.py -c S1 -p GRD -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01`
 which downloads S1 GRD products above Toulouse
 
 ### With python API
