@@ -4,7 +4,7 @@
 
 - pip install support
 - multipage requests
-- argument shape as file (shapefile, geojson, ...), shapely geometry, or geopandas object
+- argument shape bounding box: file (shapefile, geojson, ...), shapely geometry, or geopandas object
 - control of verbosity
 - NEWS.md for future updates
 
