@@ -41,6 +41,17 @@ This software is still quite basic, but if you have an account at PEPS, you may 
 - `python ./peps_download.py -c S1 -p GRD -l 'Toulouse' -a peps.txt -d 2015-11-01 -f 2015-12-01`
 which downloads S1 GRD products above Toulouse
 
+### With python API
+
+```python
+from peps_download import peps_download
+write_dir = '/home/peps/my_peps_dl'
+auth = '/home/peps/peps.txt'
+files = peps_download(write_dir, auth, collection='S2ST', location='Toulouse', start_date='2017-01-01', end_date='2017-02-01')
+files = peps_download(write_dir, auth, collection='S2ST', tile='31TCJ', start_date='2017-01-01', end_date='2017-02-01', no_download=False)
+files = peps_download(write_dir, auth, collection='S2ST', shape='my_ROI.geojson', start_date='2017-01-01', end_date='2017-02-01')
+```
+
 ## Authentification 
 
 The file peps.txt must contain your email address and your password on the same line, such as:
