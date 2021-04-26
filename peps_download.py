@@ -498,7 +498,7 @@ def peps_download(write_dir, auth="", collection='S2', product_type="", sensor_m
 
     if len(download_dict) == 0:
         print("No product matches the criteria")
-        return []
+        return {}
 
     summary, total_to_download = statistics(status_dict, message=verbose)
 
