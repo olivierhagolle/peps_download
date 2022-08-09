@@ -146,7 +146,7 @@ def parse_catalog(search_json_file, orbit, collection, clouds, sat, verbose=True
         if collection[0:2] == 'S2':
             for i in range(len(data["features"])):
                 prod = data["features"][i]["properties"]["productIdentifier"]
-                if data["features"][i]["properties"]["cloudCover"] > clouds:
+                if data["features"][i]["properties"]["cloudCover"] is not None and data["features"][i]["properties"]["cloudCover"] > clouds:
                     del download_dict[prod], status_dict[prod], size_dict[prod]
 
         # selecion of specific satellite
