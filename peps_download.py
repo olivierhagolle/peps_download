@@ -68,6 +68,7 @@ def check_rename(tmpfile, prodsize, options):
 
 
 def parse_catalog(search_json_file):
+    import json
     # Filter catalog result
     with open(search_json_file) as data_file:
         data = json.load(data_file)
@@ -319,18 +320,18 @@ if os.path.exists(options.search_json_file):
 # search in catalog
 # ====================
 if (options.product_type == "") and (options.sensor_mode == ""):
-    search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500' % (
+    search_catalog = 'curl -k -o %s "https://peps.cnes.fr/resto/api/collections/%s/search.json?%s&startDate=%s&completionDate=%s&maxRecords=500"' % (
         options.search_json_file, options.collection, query_geom, start_date, end_date)
 else:
-    search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
+    search_catalog = 'curl -k -o %s "https://peps.cnes.fr/resto/api/collections/%s/search.json?%s&startDate=%s&completionDate=%s&maxRecords=500&productType=%s&sensorMode=%s"' % (
         options.search_json_file, options.collection, query_geom, start_date, end_date, options.product_type, options.sensor_mode)
 
-if options.windows:
-    search_catalog = search_catalog.replace('\&', '^&')
+# if options.windows:
+#     search_catalog = search_catalog.replace('\&', '^&')
 
 print(search_catalog)
 os.system(search_catalog)
-time.sleep(5)
+time.sleep(1)
 
 prod, download_dict, storage_dict, size_dict = parse_catalog(options.search_json_file)
 
@@ -367,14 +368,14 @@ else:
     while (NbProdsToDownload > 0):
         # redo catalog search to update disk/tape status
         if (options.product_type == "") and (options.sensor_mode == ""):
-            search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500' % (
+            search_catalog = 'curl -k -o %s "https://peps.cnes.fr/resto/api/collections/%s/search.json?%s&startDate=%s&completionDate=%s&maxRecords=500"' % (
                 options.search_json_file, options.collection, query_geom, start_date, end_date)
         else:
-            search_catalog = 'curl -k -o %s https://peps.cnes.fr/resto/api/collections/%s/search.json?%s\&startDate=%s\&completionDate=%s\&maxRecords=500\&productType=%s\&sensorMode=%s' % (
-                options.search_json_file, options.collection, query_geom, start_date, end_date, options.product_type, options.sensor_mode)
+            search_catalog = 'curl -k -o %s "https://peps.cnes.fr/resto/api/collections/%s/search.json?%s&startDate=%s&completionDate=%s&maxRecords=500&productType=%s&sensorMode=%s"' % (
+#                 options.search_json_file, options.collection, query_geom, start_date, end_date, options.product_type, options.sensor_mode)
 
-        if options.windows:
-            search_catalog = search_catalog.replace('\&', '^&')
+#         if options.windows:
+#             search_catalog = search_catalog.replace('\&', '^&')
 
         os.system(search_catalog)
         time.sleep(2)
